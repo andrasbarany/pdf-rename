@@ -9,7 +9,7 @@ import re
 import subprocess
 
 parser = argparse.ArgumentParser(description='Rename PDFs automatically \
-                                to include author, year, and title.')
+                                to include author(s), year, and title.')
 parser.add_argument('filename', metavar='filename', type=str,
                     help='PDF to rename')
 parser.add_argument('--rename', action='store_true',
