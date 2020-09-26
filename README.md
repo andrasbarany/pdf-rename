@@ -1,6 +1,6 @@
 # A PDF renamer for linguistics
 
-This python script renames PDF from a few linguistics journals (so far
+This python script renames PDFs from a few linguistics journals (so far
 *Glossa*, *Natural Language & Linguistic Theory*, *Syntax*, and *Linguistic
 Inquiry*) based on information gathered from the PDF's metadata and the
 document's first page.
@@ -16,6 +16,9 @@ The format of the renamed files is `Author [and Author] (Year) - Title.pdf`; it
 does not handle more than two authors consistently (yet?). The bibliography
 entry is using `biblatex` fields (e.g. `journaltitle`) but can be adapted
 easily. The script also recognises subtitles when introduced by ‘:’.
+
+Finally, the script does not actually rename the file — it creates a copy. This
+was safer to play around with.
 
 ## Help
 
