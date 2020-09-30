@@ -31,7 +31,7 @@ if vars(args)["li"]:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
     li_text = extract_text(filename, maxpages=1).split('\n')
-    li_info = li_text[0:4] + li_text[-9:-4]
+    li_info = li_text[0:10] + li_text[-9:-4]
     # Get the item which includes "Linguistic Inquiry"
     info = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]]
     values = re.search('.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
@@ -44,18 +44,27 @@ if vars(args)["li"]:
     pages = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]+1]
     page_start = re.search('(\d.+?)–', pages).group(1)
     page_end = re.search('(\d.+?)–(.*)', pages).group(2)
-    title = li_info[0]
-    if len(li_info[1:li_info.index('')]) > 1:
-        author1 = HumanName(li_info[1])
-        author2 = HumanName(li_info[2])
-        citekey = author1.last + author2.last
-        names_file = author1.last + " and " + author2.last
-        names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
+    title = ' '.join(li_info[0:li_info.index('')])
+    authors = li_info[li_info.index('')+1:]
+    authors = authors[:authors.index('')]
+    if len(authors) > 1:
+        author1 = HumanName(authors[0])
+        author2 = HumanName(authors[1])
+        citekey = ''
+        names_file = ''
+        names_full = ''
+        for author in authors:
+            citekey = citekey + HumanName(author).last.replace(' ', '')
+        for i in range(len(authors)-1):
+            names_file = names_file + HumanName(authors[i]).last + ' and '
+            names_full = names_full + HumanName(authors[i]).last + ', ' + HumanName(authors[i]).first + ' and '
+        names_file = names_file + HumanName(authors[-1]).last
+        names_full = names_full + HumanName(authors[-1]).last + ', ' + HumanName(authors[-1]).first
     else:
-        author = HumanName(li_info[1])
+        author = HumanName(authors[0])
         citekey = author.last
         names_file = author.last
-        names_full = author.last
+        names_full = author.last + ", " + author.first
     doi = re.search('(10.*)', li_info[-1]).group(1)
     eid = ""
 else:
