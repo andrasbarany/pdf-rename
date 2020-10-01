@@ -155,7 +155,7 @@ else:
             names_full = author.last + ", " + author.first
 
 title = re.sub(' \x10', '-', title)
-subtitle = None
+subtitle = ''
 if ':' in title:
     subtitle = title.split(': ')[1]
     title = title.split(':')[0]
@@ -168,40 +168,23 @@ if vars(args)['rename']:
     print("Okay, renaming file to:", names_file + " (" + year + ")" + " - " + title + ".pdf\n")
     subprocess.run(['cp', filename, names_file + ' (' + year + ')' + ' - ' + title + '.pdf'])
 
-def write_bibentry(st=0):
-    if st == 1:
-        entry = "@article{" + citekey + year + ",\n" \
-                + "    author = {" + names_full + "},\n" \
-                + "    title = {" + title + "},\n" \
-                + "    subtitle = {" + subtitle + "},\n" \
-                + "    year = {" + year + "},\n" \
-                + "    journaltitle = {" + journaltitle + "},\n" \
-                + "    shortjournaltitle = {" + shortjournaltitle + "},\n" \
-                + "    volume = {" + volume + "},\n" \
-                + "    number = {" + number + "},\n" \
-                + "    pages = {" + page_start + "--" + page_end + "},\n" \
-                + "    doi = {" + doi + "},\n" \
-                + "    eid = {" + eid + "},\n" \
-                + "}"
-    else:
-        entry = "@article{" + citekey + year + ",\n" \
-                + "    author = {" + names_full + "},\n" \
-                + "    title = {" + title + "},\n" \
-                + "    year = {" + year + "},\n" \
-                + "    journaltitle = {" + journaltitle + "},\n" \
-                + "    shortjournaltitle = {" + shortjournaltitle + "},\n" \
-                + "    volume = {" + volume + "},\n" \
-                + "    number = {" + number + "},\n" \
-                + "    pages = {" + page_start + "--" + page_end + "},\n" \
-                + "    doi = {" + doi + "},\n" \
-                + "    eid = {" + eid + "},\n" \
-                + "}"
+def write_bibentry():
+    entry = "@article{" + citekey + year + ",\n" \
+            + "    author = {" + names_full + "},\n" \
+            + "    title = {" + title + "},\n" \
+            + "    subtitle = {" + subtitle + "},\n" \
+            + "    year = {" + year + "},\n" \
+            + "    journaltitle = {" + journaltitle + "},\n" \
+            + "    shortjournaltitle = {" + shortjournaltitle + "},\n" \
+            + "    volume = {" + volume + "},\n" \
+            + "    number = {" + number + "},\n" \
+            + "    pages = {" + page_start + "--" + page_end + "},\n" \
+            + "    doi = {" + doi + "},\n" \
+            + "    eid = {" + eid + "},\n" \
+            + "}"
 
     print(entry)
 
 if vars(args)['biblatex']:
     # write biblatex entry
-    if subtitle:
-        write_bibentry(st=1)
-    else:
-        write_bibentry(st=0)
+    write_bibentry()
