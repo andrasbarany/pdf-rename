@@ -48,8 +48,8 @@ if vars(args)["li"]:
     authors = li_info[li_info.index('')+1:]
     authors = authors[:authors.index('')]
     if len(authors) > 1:
-        author1 = HumanName(authors[0])
-        author2 = HumanName(authors[1])
+        #author1 = HumanName(authors[0])
+        #author2 = HumanName(authors[1])
         citekey = ''
         names_file = ''
         names_full = ''
@@ -68,10 +68,11 @@ if vars(args)["li"]:
     doi = re.search('(10.*)', li_info[-1]).group(1)
     eid = ""
 else:
-    title = doc.info[0]['Title'].decode('ISO-8859-1')
+    author = doc.info[0]['Author'].decode('ISO-8859-1')
+    title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
     if 'Nat Lang' in subject:
-        author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
+        #author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
         # NLLT
         journaltitle = "Natural Language & Linguistic Theory"
         shortjournaltitle = "NLLT"
@@ -99,7 +100,7 @@ else:
 
     if 'Glossa' in subject:
         # Glossa
-        author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
+        #author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
         journaltitle = "Glossa: a journal of general linguistics"
         shortjournaltitle = "Glossa"
         year = re.search('\d{4}', subject).group(0)
@@ -110,7 +111,7 @@ else:
         page_start = glossa.group(5)
         page_end = glossa.group(6)
         doi = glossa.group(7)
-        author = doc.info[0]['Author'].decode('ISO-8859-1')
+        #author = doc.info[0]['Author'].decode('ISO-8859-1')
         if ' and ' in author:
             author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
             author2 = HumanName(re.search('and (.*)', author).group(1))
@@ -132,16 +133,58 @@ else:
         # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast',
         # '', 'TITLE', 'Author(s)', '']
         author = syntax_info[-2]
-        title_list = title.split('þÿ')[1].split('\x00')
-        title = ''
-        for char in title_list:
-            title = title + char
+        if 'þÿ' in title:
+                    title_list = title.split('þÿ')[1].split('\x00')
+                    title = ''
+                    for char in title_list:
+                        title = title + char
         values = re.search('.+? (\d{1,2}):(\d{1}).+?(\d{4}), (\d{1,4})–(\d{1,4})',
                 syntax_info[0])
         volume, number, year = values.group(1), values.group(2), values.group(3)
         page_start, page_end = values.group(4), values.group(5)
         doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
         eid = ""
+        if ' and ' in author:
+            author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
+            author2 = HumanName(re.search('and (.*)', author).group(1))
+            citekey = author1.last + author2.last
+            names_file = author1.last + " and " + author2.last
+            names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
+        else:
+            author = HumanName(author)
+            citekey = author.last
+            names_file = author.last
+            names_full = author.last + ", " + author.first
+
+    if "Language and Linguistics Compass" in subject:
+        journaltitle = "Language and Linguistics Compass"
+        shortjournaltitle = "Lang Linguist Compass"
+        llc = extract_text(filename, maxpages=1).split('\n')
+        if 'wileyonlinelibrary.com/journal/lnc3' in llc:
+            llc_info = llc[[llc.index(x) for x in llc if 'Lang Linguist' in x or 'Lang. Linguist.' in x][0]]
+            # llc_info: 'Lang. Linguist. Compass. year; vol: pfirst-plast
+            values = re.search('.+? (\d{4}); (\d{1,3}): (\d{1,4})–(\d{1,4})', llc_info)
+            year = values.group(1)
+            volume = values.group(2)
+            number = ""
+            page_start, page_end = values.group(3), values.group(4)
+            doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
+        else:
+            llc_info = llc[:[llc.index(x) for x in llc if 'Abstract' in x][0]]
+            # llc_info: ['journaltitle volume/number (year): pfirst-plast, doi',
+            # '', 'title', '', 'author(s)', ...]
+            author = re.sub('(\*)|(\d)', '', llc_info[[llc_info.index(x) for x in llc_info if '*' in x][0]])
+            values = re.search('.+? (\d{1,2})/(\d{1}).+?\((\d{4})\): (\d{1,4})–(\d{1,4}), (.*)', llc_info[0])
+            year = values.group(3)
+            volume, number = values.group(1), values.group(2)
+            page_start, page_end = values.group(4), values.group(5)
+            doi = values.group(6)
+        eid = ""
+        if 'þÿ' in title:
+            title_list = title.split('þÿ')[1].split('\x00')
+            title = ''
+            for char in title_list:
+                title = title + char
         if ' and ' in author:
             author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
             author2 = HumanName(re.search('and (.*)', author).group(1))
