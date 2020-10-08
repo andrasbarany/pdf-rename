@@ -27,29 +27,6 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-citekey = ''
-names_file = ''
-names_full = ''
-def name_authors(author_list):
-    if len(author_list) > 1:
-        citekey = ''
-        names_file = ''
-        names_full = ''
-        for author in author_list:
-            citekey = citekey + HumanName(author).last.replace(' ', '')
-        for i in range(len(author_list)-1):
-            names_file = names_file + HumanName(author_list[i]).last + ' and '
-            names_full = names_full + HumanName(author_list[i]).last + ', ' + HumanName(author_list[i]).first + ' and '
-        names_file = names_file + HumanName(author_list[-1]).last
-        names_full = names_full + HumanName(author_list[-1]).last + ', ' + HumanName(author_list[-1]).first
-    else:
-        author = HumanName(author_list[0])
-        citekey = author.last
-        names_file = author.last
-        names_full = author.last + ", " + author.first
-
-    return [citekey, names_file, names_full]
-
 if vars(args)["li"]:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
@@ -73,7 +50,8 @@ if vars(args)["li"]:
     doi = re.search('(10.*)', li_info[-1]).group(1)
     eid = ""
 else:
-    author = doc.info[0]['Author'].decode('ISO-8859-1')
+    if 'Author' in doc.info[0]:
+        author = doc.info[0]['Author'].decode('ISO-8859-1')
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
     if 'Nat Lang' in subject:
@@ -126,19 +104,23 @@ else:
                 syntax_info[0])
         volume, number, year = values.group(1), values.group(2), values.group(3)
         page_start, page_end = values.group(4), values.group(5)
-        doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
-        eid = ""
-        if ' and ' in author:
-            author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
-            author2 = HumanName(re.search('and (.*)', author).group(1))
-            citekey = author1.last + author2.last
-            names_file = author1.last + " and " + author2.last
-            names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
+        if 'WPS-ARTICLEDOI' in doc.info[0]:
+            doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
         else:
-            author = HumanName(author)
-            citekey = author.last
-            names_file = author.last
-            names_full = author.last + ", " + author.first
+            doi = ""
+        eid = ""
+        authors = author.split(' and ')
+        #if ' and ' in author:
+        #    author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
+        #    author2 = HumanName(re.search('and (.*)', author).group(1))
+        #    citekey = author1.last + author2.last
+        #    names_file = author1.last + " and " + author2.last
+        #    names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
+        #else:
+        #    author = HumanName(author)
+        #    citekey = author.last
+        #    names_file = author.last
+        #    names_full = author.last + ", " + author.first
 
     if "Language and Linguistics Compass" in subject:
         journaltitle = "Language and Linguistics Compass"
@@ -169,17 +151,7 @@ else:
             title = ''
             for char in title_list:
                 title = title + char
-        if ' and ' in author:
-            author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
-            author2 = HumanName(re.search('and (.*)', author).group(1))
-            citekey = author1.last + author2.last
-            names_file = author1.last + " and " + author2.last
-            names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
-        else:
-            author = HumanName(author)
-            citekey = author.last
-            names_file = author.last
-            names_full = author.last + ", " + author.first
+        authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
 subtitle = ''
@@ -187,13 +159,28 @@ if ':' in title:
     subtitle = title.split(': ')[1]
     title = title.split(':')[0]
 
-print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
-        "in", shortjournaltitle + ".\n")
+citekey = ''
+names_file = ''
+names_full = ''
+def name_authors(author_list):
+    if len(author_list) > 1:
+        citekey = ''
+        names_file = ''
+        names_full = ''
+        for author in author_list:
+            citekey = citekey + HumanName(author).last.replace(' ', '')
+        for i in range(len(author_list)-1):
+            names_file = names_file + HumanName(author_list[i]).last + ' and '
+            names_full = names_full + HumanName(author_list[i]).last + ', ' + HumanName(author_list[i]).first + ' and '
+        names_file = names_file + HumanName(author_list[-1]).last
+        names_full = names_full + HumanName(author_list[-1]).last + ', ' + HumanName(author_list[-1]).first
+    else:
+        author = HumanName(author_list[0])
+        citekey = author.last
+        names_file = author.last
+        names_full = author.last + ", " + author.first
 
-if vars(args)['rename']:
-    # rename file
-    print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
-    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
+    return [citekey, names_file, names_full]
 
 def write_bibentry():
     entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
@@ -211,6 +198,14 @@ def write_bibentry():
             + "}"
 
     print(entry)
+
+print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
+        "in", shortjournaltitle + ".\n")
+
+if vars(args)['rename']:
+    # rename file
+    print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
+    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 if vars(args)['biblatex']:
     # write biblatex entry
