@@ -56,7 +56,7 @@ else:
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
     if 'Nat Lang' in subject:
         # NLLT
-        journaltitle = "Natural Language & Linguistic Theory"
+        journaltitle = "Natural Language \& Linguistic Theory"
         shortjournaltitle = "NLLT"
         doi = doc.info[0]['doi'].decode('UTF-8')
         info = extract_text(filename, maxpages=1).split('\n')[:10]
