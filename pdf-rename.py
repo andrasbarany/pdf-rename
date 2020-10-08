@@ -27,6 +27,29 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
+citekey = ''
+names_file = ''
+names_full = ''
+def name_authors(author_list):
+    if len(author_list) > 1:
+        citekey = ''
+        names_file = ''
+        names_full = ''
+        for author in author_list:
+            citekey = citekey + HumanName(author).last.replace(' ', '')
+        for i in range(len(author_list)-1):
+            names_file = names_file + HumanName(author_list[i]).last + ' and '
+            names_full = names_full + HumanName(author_list[i]).last + ', ' + HumanName(author_list[i]).first + ' and '
+        names_file = names_file + HumanName(author_list[-1]).last
+        names_full = names_full + HumanName(author_list[-1]).last + ', ' + HumanName(author_list[-1]).first
+    else:
+        author = HumanName(author_list[0])
+        citekey = author.last
+        names_file = author.last
+        names_full = author.last + ", " + author.first
+
+    return [citekey, names_file, names_full]
+
 if vars(args)["li"]:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
@@ -47,24 +70,6 @@ if vars(args)["li"]:
     title = ' '.join(li_info[0:li_info.index('')])
     authors = li_info[li_info.index('')+1:]
     authors = authors[:authors.index('')]
-    if len(authors) > 1:
-        #author1 = HumanName(authors[0])
-        #author2 = HumanName(authors[1])
-        citekey = ''
-        names_file = ''
-        names_full = ''
-        for author in authors:
-            citekey = citekey + HumanName(author).last.replace(' ', '')
-        for i in range(len(authors)-1):
-            names_file = names_file + HumanName(authors[i]).last + ' and '
-            names_full = names_full + HumanName(authors[i]).last + ', ' + HumanName(authors[i]).first + ' and '
-        names_file = names_file + HumanName(authors[-1]).last
-        names_full = names_full + HumanName(authors[-1]).last + ', ' + HumanName(authors[-1]).first
-    else:
-        author = HumanName(authors[0])
-        citekey = author.last
-        names_file = author.last
-        names_full = author.last + ", " + author.first
     doi = re.search('(10.*)', li_info[-1]).group(1)
     eid = ""
 else:
@@ -72,12 +77,11 @@ else:
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
     if 'Nat Lang' in subject:
-        #author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
         # NLLT
         journaltitle = "Natural Language & Linguistic Theory"
         shortjournaltitle = "NLLT"
         doi = doc.info[0]['doi'].decode('UTF-8')
-        info = extract_text(filename, maxpages=1).split('\n')[:6]
+        info = extract_text(filename, maxpages=1).split('\n')[:10]
         nllt = re.search('.+?\((\d{4})\) (\d{1,2}):(\d{1,4})–(\d{1,4})', info[0])
         year = nllt.group(1)
         volume = nllt.group(2)
@@ -85,18 +89,9 @@ else:
         eid = ""
         page_start = nllt.group(3)
         page_end = nllt.group(4)
-        author = info[5]
-        if '·' in author:
-            author1 = HumanName(re.search('([A-Za-z].+?)(\d| ·)', author).group(1))
-            author2 = HumanName(re.search('· (.+?)(\d)', author).group(1))
-            citekey = author1.last + author2.last
-            names_file = author1.last + " and " + author2.last
-            names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
-        else:
-            author = HumanName(author)
-            citekey = author.last
-            names_file = author.last
-            names_full = author.last
+        author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
+        author = re.sub('\d', '', author)
+        authors = author.split(' · ')
 
     if 'Glossa' in subject:
         # Glossa
@@ -111,18 +106,7 @@ else:
         page_start = glossa.group(5)
         page_end = glossa.group(6)
         doi = glossa.group(7)
-        #author = doc.info[0]['Author'].decode('ISO-8859-1')
-        if ' and ' in author:
-            author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
-            author2 = HumanName(re.search('and (.*)', author).group(1))
-            citekey = author1.last + author2.last
-            names_file = author1.last + " and " + author2.last
-            names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
-        else:
-            author = HumanName(author)
-            citekey = author.last
-            names_file = author.last
-            names_full = author.last + ", " + author.first
+        authors = author.split(' and ')
 
     if 'Syntax' in subject:
         # Syntax
@@ -203,17 +187,17 @@ if ':' in title:
     subtitle = title.split(': ')[1]
     title = title.split(':')[0]
 
-print("We're looking at", "“" + title + "”", "by", names_file, "from", year,
+print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
         "in", shortjournaltitle + ".\n")
 
 if vars(args)['rename']:
     # rename file
-    print("Okay, renaming file to:", names_file + " (" + year + ")" + " - " + title + ".pdf\n")
-    subprocess.run(['cp', filename, names_file + ' (' + year + ')' + ' - ' + title + '.pdf'])
+    print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
+    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 def write_bibentry():
-    entry = "@article{" + citekey + year + ",\n" \
-            + "    author = {" + names_full + "},\n" \
+    entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
+            + "    author = {" + name_authors(authors)[2] + "},\n" \
             + "    title = {" + title + "},\n" \
             + "    subtitle = {" + subtitle + "},\n" \
             + "    year = {" + year + "},\n" \
