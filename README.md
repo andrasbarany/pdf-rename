@@ -10,11 +10,9 @@ Papers from the following journals are recognised automatically:
 - Glossa
 - Language (with a Project Muse titlepage)
 - Language and Linguistics Compass
+- Linguistic Inquiry (without jstor titlepage; might not work for squibs yet)
 - Natural Language & Linguistic Theory
 - Syntax
-
-To rename a paper from *LI*, add the `--li` option. I might add others in the
-future.
 
 In addition to renaming files, the script can also output a `biblatex` entry
 for the file.
