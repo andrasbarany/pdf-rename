@@ -119,16 +119,9 @@ else:
         authors = author.split(' and ')
 
     if "Language" in subject:
-        # Syntax
         journaltitle = "Language"
         shortjournaltitle = "Lg"
         lg_info = journalinfo[:10]
-#        author = syntax_info[-2]
-#        if 'þÿ' in title:
-#                    title_list = title.split('þÿ')[1].split('\x00')
-#                    title = ''
-#                    for char in title_list:
-#                        title = title + char
         values = re.search('.+? Volume (\d{1,3}), Number (\d{1}), June (\d{4}), pp. (\d{1,4})-(\d{1,4})',
                 subject)
         volume, number, year = values.group(1), values.group(2), values.group(3)
