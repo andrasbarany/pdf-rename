@@ -27,6 +27,8 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
+journals = ['Cognitive Linguistics', 'Language']
+
 if vars(args)["li"]:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
@@ -53,7 +55,12 @@ else:
     if 'Author' in doc.info[0]:
         author = doc.info[0]['Author'].decode('ISO-8859-1')
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
-    subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
+    if 'Subject' in doc.info[0]:
+        subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
+    else:
+        journalinfo = extract_text(filename, maxpages=1).split('\n')
+        #subject = [journal for journal in journals if journal in [line for line in journalinfo if any(journal in line for journal in journals)][0]][0]
+        subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
     if 'Nat Lang' in subject:
         # NLLT
         journaltitle = "Natural Language \& Linguistic Theory"
@@ -110,17 +117,25 @@ else:
             doi = ""
         eid = ""
         authors = author.split(' and ')
-        #if ' and ' in author:
-        #    author1 = HumanName(re.search('([A-Za-z].+?) and', author).group(1))
-        #    author2 = HumanName(re.search('and (.*)', author).group(1))
-        #    citekey = author1.last + author2.last
-        #    names_file = author1.last + " and " + author2.last
-        #    names_full = author1.last + ", " + author1.first + " and " + author2.last + ", " + author2.first
-        #else:
-        #    author = HumanName(author)
-        #    citekey = author.last
-        #    names_file = author.last
-        #    names_full = author.last + ", " + author.first
+
+    if "Language" in subject:
+        # Syntax
+        journaltitle = "Language"
+        shortjournaltitle = "Lg"
+        lg_info = journalinfo[:10]
+#        author = syntax_info[-2]
+#        if 'þÿ' in title:
+#                    title_list = title.split('þÿ')[1].split('\x00')
+#                    title = ''
+#                    for char in title_list:
+#                        title = title + char
+        values = re.search('.+? Volume (\d{1,3}), Number (\d{1}), June (\d{4}), pp. (\d{1,4})-(\d{1,4})',
+                subject)
+        volume, number, year = values.group(1), values.group(2), values.group(3)
+        page_start, page_end = values.group(4), values.group(5)
+        doi = re.search('(10.*)', lg_info[[lg_info.index(x) for x in lg_info if 'doi.org' in x][0]]).group(1)
+        eid = ""
+        authors = author.split(', ')
 
     if "Language and Linguistics Compass" in subject:
         journaltitle = "Language and Linguistics Compass"
@@ -171,14 +186,16 @@ def name_authors(author_list):
             citekey = citekey + HumanName(author).last.replace(' ', '')
         for i in range(len(author_list)-1):
             names_file = names_file + HumanName(author_list[i]).last + ' and '
-            names_full = names_full + HumanName(author_list[i]).last + ', ' + HumanName(author_list[i]).first + ' and '
+            names_full = names_full + HumanName(author_list[i]).last + ', ' + \
+                    HumanName(author_list[i]).first + ' ' + HumanName(author_list[i]).middle + ' and '
         names_file = names_file + HumanName(author_list[-1]).last
-        names_full = names_full + HumanName(author_list[-1]).last + ', ' + HumanName(author_list[-1]).first
+        names_full = names_full + HumanName(author_list[-1]).last + ', ' + \
+                HumanName(author_list[-1]).first + ' ' + HumanName(author_list[-1]).middle
     else:
         author = HumanName(author_list[0])
         citekey = author.last
         names_file = author.last
-        names_full = author.last + ", " + author.first
+        names_full = author.last + ", " + author.first + ' ' + author.middle
 
     return [citekey, names_file, names_full]
 
