@@ -5,9 +5,16 @@ This python script renames PDFs from a few linguistics journals (so far
 Inquiry*) based on information gathered from the PDF's metadata and the
 document's first page.
 
-Papers from *Glossa*, *Natural Language & Linguistic Theory*, and *Syntax* are
-recognised automatically. To rename a paper from *LI*, add the `--li` option.
-I might add others in the future.
+Papers from the following journals are recognised automatically:
+
+- *Glossa*
+- *Language* (with a Project Muse titlepage)
+- Language and Linguistics Compass
+- *Natural Language & Linguistic Theory*
+- *Syntax* 
+
+To rename a paper from *LI*, add the `--li` option. I might add others in the
+future.
 
 In addition to renaming files, the script can also output a `biblatex` entry
 for the file.
