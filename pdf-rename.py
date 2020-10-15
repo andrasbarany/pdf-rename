@@ -47,12 +47,14 @@ if vars(args)["li"]:
     shortjournaltitle = "LI"
     # The page numbers are one item further than info
     pages = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]+1]
-    page_start = re.search('(\d.+?)–', pages).group(1)
-    page_end = re.search('(\d.+?)–(.*)', pages).group(2)
+    page_start, page_end = re.search('(\d{1,3})–(.*)', pages).group(1), re.search('(\d{1,3})–(.*)', pages).group(2)
     title = ' '.join(li_info[0:li_info.index('')])
     authors = li_info[li_info.index('')+1:]
     authors = authors[:authors.index('')]
-    doi = re.search('(10.*)', li_info[-1]).group(1)
+    if type(re.search('(10.*)', li_info[-1])) == re.Match:
+        doi = get_doi_from_text(li_info)
+    else:
+        doi = ""
     eid = ""
 else:
     if 'Author' in doc.info[0]:
@@ -162,8 +164,7 @@ else:
         shortjournaltitle = "Syntax"
         syntax = extract_text(filename, maxpages=1).split('\n')
         syntax_info = syntax[:[syntax.index(x) for x in syntax if 'Abstract' in x][0]]
-        # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast',
-        # '', 'TITLE', 'Author(s)', '']
+        # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast', '', 'TITLE', 'Author(s)', '']
         author = syntax_info[-2]
         if 'þÿ' in title:
                     title_list = title.split('þÿ')[1].split('\x00')
@@ -190,7 +191,15 @@ if ':' in title:
 citekey = ''
 names_file = ''
 names_full = ''
+def pad(name):
+    """Add a space if name is a non-empty string."""
+    if name != '':
+        return ' ' + name
+    else:
+        return ''
+
 def name_authors(author_list):
+    """Create list of authors separated by ',' and 'and'."""
     if len(author_list) > 1:
         citekey = ''
         names_file = ''
@@ -200,15 +209,15 @@ def name_authors(author_list):
         for i in range(len(author_list)-1):
             names_file = names_file + HumanName(author_list[i]).last + ' and '
             names_full = names_full + HumanName(author_list[i]).last + ', ' + \
-                    HumanName(author_list[i]).first + ' ' + HumanName(author_list[i]).middle + ' and '
+                    HumanName(author_list[i]).first + pad(HumanName(author_list[i]).middle) + ' and '
         names_file = names_file + HumanName(author_list[-1]).last
         names_full = names_full + HumanName(author_list[-1]).last + ', ' + \
-                HumanName(author_list[-1]).first + ' ' + HumanName(author_list[-1]).middle
+                HumanName(author_list[-1]).first + pad(HumanName(author_list[-1]).middle)
     else:
         author = HumanName(author_list[0])
         citekey = author.last
         names_file = author.last
-        names_full = author.last + ", " + author.first + ' ' + author.middle
+        names_full = author.last + ", " + author.first + pad(author.middle)
 
     return [citekey, names_file, names_full]
 
