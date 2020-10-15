@@ -25,9 +25,10 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Lingua', 'Language', 'Linguistic Inquiry']
+journals = ['Lingua', 'Language', 'Linguistic Inquiry', 'Nat Lang', 'Oceanic Linguistics']
+
 def get_doi_from_text(text):
-    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x][0]]).group(1)
+    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or ' DOI ' in x][0]]).group(1)
     return(doi)
 
 if 'Author' in doc.info[0]:
@@ -42,8 +43,31 @@ if 'Subject' in doc.info[0]:
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
 else:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
-    #subject = [journal for journal in journals if journal in [line for line in journalinfo if any(journal in line for journal in journals)][0]][0]
     subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
+    if 'Source: ' in subject:
+        subject = 'JSTOR'
+
+if subject == 'JSTOR':
+    values_one = re.search('Source: (.+?), .+?, (\d{4}), Vol. (\d{1,2})', journalinfo[0])
+    journaltitle = values_one.group(1)
+    if journaltitle == "Linguistic Inquiry":
+        shortjournaltitle = "LI"
+    elif journaltitle == "Natural Language & Linguistic Theory":
+        journaltitle = "Natural Language \& Linguistic Theory"
+        shortjournaltitle = "NLLT"
+    else:
+        shortjournaltitle = journaltitle
+    year = values_one.group(2)
+    volume = values_one.group(3)
+    values_two = re.search('No. (\d{1}).+?pp. (\d{1,4})-(\d{1,4})', journalinfo[0])
+    number = values_two.group(1)
+    page_start = values_two.group(2)
+    page_end = values_two.group(3)
+    title = journalinfo[2].strip(' \$')
+    author = journalinfo[4].strip('Author(s): ')
+    authors = author.split(' and ')
+    doi = ""
+    eid = ""
 
 if 'Glossa' in subject:
     # Glossa
@@ -148,15 +172,20 @@ if 'Nat Lang' in subject:
     # NLLT
     journaltitle = "Natural Language \& Linguistic Theory"
     shortjournaltitle = "NLLT"
-    doi = doc.info[0]['doi'].decode('UTF-8')
+    if 'doi' in doc.info[0]:
+        doi = doc.info[0]['doi'].decode('UTF-8')
+    else:
+        doi = get_doi_from_text(journalinfo)
     info = extract_text(filename, maxpages=1).split('\n')[:10]
-    nllt = re.search('.+?\((\d{4})\) (\d{1,2}):(\d{1,4})–(\d{1,4})', info[0])
+    nllt = re.search('.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})', info[0])
     year = nllt.group(1)
     volume = nllt.group(2)
     number = ""
+    if title == "":
+        title = info[[info.index(x) for x in info if 'Received' in x][0]-4].strip(' ')
     eid = ""
-    page_start = nllt.group(3)
-    page_end = nllt.group(4)
+    page_start = nllt.group(4)
+    page_end = nllt.group(6)
     author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
     author = re.sub('\d', '', author)
     authors = author.split(' · ')

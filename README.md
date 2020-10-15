@@ -10,7 +10,7 @@ Papers from the following journals are recognised automatically:
 - Glossa
 - Language (with a Project Muse titlepage)
 - Language and Linguistics Compass
-- Linguistic Inquiry (without jstor titlepage; might not work for squibs yet)
+- Linguistic Inquiry
 - Natural Language & Linguistic Theory
 - Syntax
 
