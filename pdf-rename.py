@@ -27,7 +27,10 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Cognitive Linguistics', 'Language']
+journals = ['Lingua', 'Language']
+def get_doi_from_text(text):
+    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x][0]]).group(1)
+    return(doi)
 
 if vars(args)["li"]:
     # LI is messy: we're looking directly at the text of the first page,
@@ -61,22 +64,6 @@ else:
         journalinfo = extract_text(filename, maxpages=1).split('\n')
         #subject = [journal for journal in journals if journal in [line for line in journalinfo if any(journal in line for journal in journals)][0]][0]
         subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
-    if 'Nat Lang' in subject:
-        # NLLT
-        journaltitle = "Natural Language \& Linguistic Theory"
-        shortjournaltitle = "NLLT"
-        doi = doc.info[0]['doi'].decode('UTF-8')
-        info = extract_text(filename, maxpages=1).split('\n')[:10]
-        nllt = re.search('.+?\((\d{4})\) (\d{1,2}):(\d{1,4})–(\d{1,4})', info[0])
-        year = nllt.group(1)
-        volume = nllt.group(2)
-        number = ""
-        eid = ""
-        page_start = nllt.group(3)
-        page_end = nllt.group(4)
-        author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
-        author = re.sub('\d', '', author)
-        authors = author.split(' · ')
 
     if 'Glossa' in subject:
         # Glossa
@@ -93,31 +80,6 @@ else:
         doi = glossa.group(7)
         authors = author.split(' and ')
 
-    if 'Syntax' in subject:
-        # Syntax
-        journaltitle = "Syntax"
-        shortjournaltitle = "Syntax"
-        syntax = extract_text(filename, maxpages=1).split('\n')
-        syntax_info = syntax[:[syntax.index(x) for x in syntax if 'Abstract' in x][0]]
-        # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast',
-        # '', 'TITLE', 'Author(s)', '']
-        author = syntax_info[-2]
-        if 'þÿ' in title:
-                    title_list = title.split('þÿ')[1].split('\x00')
-                    title = ''
-                    for char in title_list:
-                        title = title + char
-        values = re.search('.+? (\d{1,2}):(\d{1}).+?(\d{4}), (\d{1,4})–(\d{1,4})',
-                syntax_info[0])
-        volume, number, year = values.group(1), values.group(2), values.group(3)
-        page_start, page_end = values.group(4), values.group(5)
-        if 'WPS-ARTICLEDOI' in doc.info[0]:
-            doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
-        else:
-            doi = ""
-        eid = ""
-        authors = author.split(' and ')
-
     if "Language" in subject:
         journaltitle = "Language"
         shortjournaltitle = "Lg"
@@ -126,7 +88,8 @@ else:
                 subject)
         volume, number, year = values.group(1), values.group(2), values.group(3)
         page_start, page_end = values.group(4), values.group(5)
-        doi = re.search('(10.*)', lg_info[[lg_info.index(x) for x in lg_info if 'doi.org' in x][0]]).group(1)
+        #doi = re.search('(10.*)', lg_info[[lg_info.index(x) for x in lg_info if 'doi.org' in x][0]]).group(1)
+        doi = get_doi_from_text(lg_info)
         eid = ""
         authors = author.split(', ')
 
@@ -159,6 +122,63 @@ else:
             title = ''
             for char in title_list:
                 title = title + char
+        authors = author.split(' and ')
+
+    if 'Lingua' in subject:
+        journaltitle = "Lingua"
+        shortjournaltitle = "Lingua"
+        values = re.search('Lingua (\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})', journalinfo[0])
+        volume = values.group(1)
+        number = ""
+        year = values.group(2)
+        page_start = values.group(3)
+        page_end = values.group(4)
+        doi = get_doi_from_text(journalinfo)
+        eid = ""
+        title = journalinfo[4]
+        author = re.sub('(\*)|(\d)', '', journalinfo[6])
+        authors = author.split(', ')
+
+    if 'Nat Lang' in subject:
+        # NLLT
+        journaltitle = "Natural Language \& Linguistic Theory"
+        shortjournaltitle = "NLLT"
+        doi = doc.info[0]['doi'].decode('UTF-8')
+        info = extract_text(filename, maxpages=1).split('\n')[:10]
+        nllt = re.search('.+?\((\d{4})\) (\d{1,2}):(\d{1,4})–(\d{1,4})', info[0])
+        year = nllt.group(1)
+        volume = nllt.group(2)
+        number = ""
+        eid = ""
+        page_start = nllt.group(3)
+        page_end = nllt.group(4)
+        author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
+        author = re.sub('\d', '', author)
+        authors = author.split(' · ')
+
+    if 'Syntax' in subject:
+        # Syntax
+        journaltitle = "Syntax"
+        shortjournaltitle = "Syntax"
+        syntax = extract_text(filename, maxpages=1).split('\n')
+        syntax_info = syntax[:[syntax.index(x) for x in syntax if 'Abstract' in x][0]]
+        # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast',
+        # '', 'TITLE', 'Author(s)', '']
+        author = syntax_info[-2]
+        if 'þÿ' in title:
+                    title_list = title.split('þÿ')[1].split('\x00')
+                    title = ''
+                    for char in title_list:
+                        title = title + char
+        values = re.search('.+? (\d{1,2}):(\d{1}).+?(\d{4}), (\d{1,4})–(\d{1,4})',
+                syntax_info[0])
+        volume, number, year = values.group(1), values.group(2), values.group(3)
+        page_start, page_end = values.group(4), values.group(5)
+        if 'WPS-ARTICLEDOI' in doc.info[0]:
+            doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
+        else:
+            doi = ""
+        eid = ""
         authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
