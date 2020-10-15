@@ -92,11 +92,10 @@ if "Language" in subject:
     journaltitle = "Language"
     shortjournaltitle = "Lg"
     lg_info = journalinfo[:10]
-    values = re.search('.+? Volume (\d{1,3}), Number (\d{1}), June (\d{4}), pp. (\d{1,4})-(\d{1,4})',
+    values = re.search('.+? Volume (\d{1,3}), Number (\d{1}), .+? (\d{4}), pp. (e|)(\d{1,4})-(e|)(\d{1,4})',
             subject)
     volume, number, year = values.group(1), values.group(2), values.group(3)
-    page_start, page_end = values.group(4), values.group(5)
-    #doi = re.search('(10.*)', lg_info[[lg_info.index(x) for x in lg_info if 'doi.org' in x][0]]).group(1)
+    page_start, page_end = values.group(4)+values.group(5), values.group(6)+values.group(7)
     doi = get_doi_from_text(lg_info)
     eid = ""
     authors = author.split(', ')
