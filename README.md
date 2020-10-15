@@ -7,11 +7,11 @@ document's first page.
 
 Papers from the following journals are recognised automatically:
 
-- *Glossa*
-- *Language* (with a Project Muse titlepage)
+- Glossa
+- Language (with a Project Muse titlepage)
 - Language and Linguistics Compass
-- *Natural Language & Linguistic Theory*
-- *Syntax* 
+- Natural Language & Linguistic Theory
+- Syntax
 
 To rename a paper from *LI*, add the `--li` option. I might add others in the
 future.
