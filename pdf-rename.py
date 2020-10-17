@@ -28,24 +28,24 @@ with open(filename, 'rb') as f:
 journals = ['Lingua', 'Language', 'Linguistic Inquiry', 'Nat Lang']
 
 def get_doi_from_text(text):
-    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or ' DOI ' in x][0]]).group(1)
+    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
     return(doi)
 
-if 'Author' in doc.info[0]:
+if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'':
     author = doc.info[0]['Author'].decode('ISO-8859-1')
 
-if 'Title' in doc.info[0]:
+if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'':
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
 else:
     title = ""
 
-if 'Subject' in doc.info[0]:
+if 'Subject' in doc.info[0] and doc.info[0]['Subject'] != b'':
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
 else:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
-    # remove empty strings
-    journalinfo = [str for str in journalinfo if str]
     if any('Source: ' in line for line in journalinfo):
+        # remove empty strings
+        journalinfo = [str for str in journalinfo if str]
         subject = 'JSTOR'
     else:
         subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
