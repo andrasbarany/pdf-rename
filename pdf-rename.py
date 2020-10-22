@@ -68,7 +68,7 @@ if subject == 'JSTOR':
     page_end = values_two.group(4)
     author_field_index = [journalinfo.index(x) for x in journalinfo if 'Author(s): ' in x][0]
     title = journalinfo[author_field_index-1].strip(' \$')
-    author = journalinfo[author_field_index].strip('Author(s): ')
+    author = journalinfo[author_field_index].strip('Author(s):').strip()
     authors = author.split(' and ')
     doi = ""
     eid = ""
