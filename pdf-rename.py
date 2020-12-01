@@ -166,10 +166,7 @@ if 'Linguistic Inquiry' in subject:
     title = ' '.join(li_info[0:li_info.index('')])
     authors = li_info[li_info.index('')+1:]
     authors = authors[:authors.index('')]
-    if type(re.search('(10.*)', li_info[-1])) == re.Match:
-        doi = get_doi_from_text(li_info)
-    else:
-        doi = ""
+    doi = get_doi_from_text(li_text)
     eid = ""
 
 if 'Nat Lang' in subject:
