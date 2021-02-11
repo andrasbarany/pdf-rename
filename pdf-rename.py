@@ -25,7 +25,7 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Lingua', 'Language', 'Linguistic Inquiry', 'Nat Lang']
+journals = ['Lingua', 'Language', 'Linguistic Inquiry', 'Nat Lang', 'Journal of Comparative Germanic Linguistics']
 
 def get_doi_from_text(text):
     doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
@@ -72,6 +72,35 @@ if subject == 'JSTOR':
     authors = author.split(' and ')
     doi = ""
     eid = ""
+
+if 'Cognition' in subject:
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    journaltitle = "Cognition"
+    shortjournaltitle = "Cognition"
+    values = re.search('Cognition, (\d{1,3}) \((\d{4})\) (\d{1,6})', doc.info[0]['Subject'].decode('UTF-8'))
+    volume = values.group(1)
+    number = ""
+    year = values.group(2)
+    page_start = "1"
+    page_end = ""
+    eid = values.group(3)
+    doi = get_doi_from_text(journalinfo)
+    authors = author.split(', ')
+
+if 'Comparative Germanic Linguistics' in subject:
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    journaltitle = "Journal of Comparative Germanic Linguistics"
+    shortjournaltitle = "JCGL"
+    values = re.search('Journal of Comparative Germanic Linguistics (\d{1,3}): (\d{1,4})–(\d{1,4}), (\d{4})', subject)
+    volume = values.group(1)
+    number = ""
+    year = values.group(4)
+    page_start = values.group(2)
+    page_end = values.group(3)
+    eid = ""
+    doi = "" #get_doi_from_text(journalinfo)
+    author = re.sub('\d', '', journalinfo[11])
+    authors = author.split(' and ')
 
 if 'Glossa' in subject:
     # Glossa
@@ -146,20 +175,6 @@ if 'Lingua' in subject:
     author = re.sub('(\*)|(\d)', '', journalinfo[6])
     authors = author.split(', ')
 
-if 'Cognition' in subject:
-    journalinfo = extract_text(filename, maxpages=1).split('\n')
-    journaltitle = "Cognition"
-    shortjournaltitle = "Cognition"
-    values = re.search('Cognition, (\d{1,3}) \((\d{4})\) (\d{1,6})', doc.info[0]['Subject'].decode('UTF-8'))
-    volume = values.group(1)
-    number = ""
-    year = values.group(2)
-    page_start = "1"
-    page_end = ""
-    eid = values.group(3)
-    doi = get_doi_from_text(journalinfo)
-    authors = author.split(', ')
-
 if 'Linguistic Inquiry' in subject:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
@@ -206,6 +221,7 @@ if 'Nat Lang' in subject:
     page_end = nllt.group(6)
     author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
     author = re.sub('\d', '', author)
+    author = re.sub('¸s', 'ş', author)
     authors = author.split(' · ')
 
 if 'Syntax' in subject:
@@ -258,19 +274,19 @@ def name_authors(author_list):
         names_file = ''
         names_full = ''
         for author in author_list:
-            citekey = citekey + HumanName(author).last.replace(' ', '')
+            citekey = citekey + HumanName(author).last.title().replace(' ', '')
         for i in range(len(author_list)-1):
-            names_file = names_file + HumanName(author_list[i]).last + ' and '
-            names_full = names_full + HumanName(author_list[i]).last + ', ' + \
-                    HumanName(author_list[i]).first + pad(HumanName(author_list[i]).middle) + ' and '
-        names_file = names_file + HumanName(author_list[-1]).last
-        names_full = names_full + HumanName(author_list[-1]).last + ', ' + \
-                HumanName(author_list[-1]).first + pad(HumanName(author_list[-1]).middle)
+            names_file = names_file + HumanName(author_list[i]).last.title() + ' and '
+            names_full = names_full + HumanName(author_list[i]).last.title() + ', ' + \
+                    HumanName(author_list[i]).first.title() + pad(HumanName(author_list[i]).middle) + ' and '
+        names_file = names_file + HumanName(author_list[-1]).last.title()
+        names_full = names_full + HumanName(author_list[-1]).last.title() + ', ' + \
+                HumanName(author_list[-1]).first.title() + pad(HumanName(author_list[-1]).middle)
     else:
         author = HumanName(author_list[0])
-        citekey = author.last
-        names_file = author.last
-        names_full = author.last + ", " + author.first + pad(author.middle)
+        citekey = author.last.title()
+        names_file = author.last.title()
+        names_full = author.last.title() + ", " + author.first.title() + pad(author.middle)
 
     return [citekey, names_file, names_full]
 
