@@ -146,6 +146,20 @@ if 'Lingua' in subject:
     author = re.sub('(\*)|(\d)', '', journalinfo[6])
     authors = author.split(', ')
 
+if 'Cognition' in subject:
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    journaltitle = "Cognition"
+    shortjournaltitle = "Cognition"
+    values = re.search('Cognition, (\d{1,3}) \((\d{4})\) (\d{1,6})', doc.info[0]['Subject'].decode('UTF-8'))
+    volume = values.group(1)
+    number = ""
+    year = values.group(2)
+    page_start = "1"
+    page_end = ""
+    eid = values.group(3)
+    doi = get_doi_from_text(journalinfo)
+    authors = author.split(', ')
+
 if 'Linguistic Inquiry' in subject:
     # LI is messy: we're looking directly at the text of the first page,
     # reading it in as a list of strings.
@@ -223,6 +237,9 @@ subtitle = ''
 if ':' in title:
     subtitle = title.split(': ')[1]
     title = title.split(':')[0]
+if '_' in title:
+    subtitle = title.split('_ ')[1]
+    title = title.split('_')[0]
 
 citekey = ''
 names_file = ''
@@ -274,10 +291,9 @@ def write_bibentry():
 
     print(entry)
 
-print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
-        "in", shortjournaltitle + ".\n")
-
 if vars(args)['rename']:
+    print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
+        "in", shortjournaltitle + ".\n")
     # rename file
     print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
     subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
