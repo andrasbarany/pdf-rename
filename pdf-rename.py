@@ -25,7 +25,9 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Lingua', 'Language', 'Linguistic Inquiry', 'Nat Lang', 'Journal of Comparative Germanic Linguistics']
+journals = ['Lingua', 'Linguistic Inquiry', 'Nat Lang',
+            'Journal of Comparative Germanic Linguistics',
+            'The Linguistic Review', 'Language, Volume']
 
 def get_doi_from_text(text):
     doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
@@ -247,6 +249,21 @@ if 'Syntax' in subject:
         doi = ""
     eid = ""
     authors = author.split(' and ')
+
+if "The Linguistic Review" in subject:
+    # TLR
+    journaltitle = "The Linguistic Review"
+    shortjournaltitle = "TLR"
+    author = journalinfo[journalinfo.index('')+1]
+    title = ' '.join(journalinfo[:journalinfo.index('')])[:-1]
+    values = re.search('The Linguistic Review (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+            subject)
+    volume, year = values.group(1), values.group(2)
+    number = ''
+    page_start, page_end = values.group(3), values.group(4)
+    doi = ""
+    eid = ""
+    authors = author.split(' AND ')
 
 title = re.sub(' \x10', '-', title)
 subtitle = ''
