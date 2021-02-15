@@ -25,9 +25,16 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Lingua', 'Linguistic Inquiry', 'Nat Lang',
-            'Journal of Comparative Germanic Linguistics',
-            'The Linguistic Review', 'Language, Volume']
+journals = ['Journal of Comparative Germanic Linguistics',
+            'Journal ofGermanic Linguistics',
+            'Journal of Language Modelling',
+            'Language, Volume',
+            'Lingua',
+            'Linguistic Inquiry',
+            'Nat Lang',
+            'The Linguistic Review',
+            'Theoretical Linguistics'
+            ]
 
 def get_doi_from_text(text):
     doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
@@ -90,7 +97,6 @@ if 'Cognition' in subject:
     authors = author.split(', ')
 
 if 'Comparative Germanic Linguistics' in subject:
-    journalinfo = extract_text(filename, maxpages=1).split('\n')
     journaltitle = "Journal of Comparative Germanic Linguistics"
     shortjournaltitle = "JCGL"
     values = re.search('Journal of Comparative Germanic Linguistics (\d{1,3}): (\d{1,4})–(\d{1,4}), (\d{4})', subject)
@@ -102,6 +108,20 @@ if 'Comparative Germanic Linguistics' in subject:
     eid = ""
     doi = "" #get_doi_from_text(journalinfo)
     author = re.sub('\d', '', journalinfo[11])
+    authors = author.split(' and ')
+
+if 'Journal ofGermanic Linguistics' in subject:
+    journaltitle = "Journal of Germanic Linguistics"
+    shortjournaltitle = "Journal of Germanic Linguistics"
+    values = re.search('Journal ofGermanic Linguistics (\d{1,3}).(\d{1}) \((\d{4})\):(\d{1,4})-(\d{1,4})', subject)
+    volume = values.group(1)
+    number = values.group(2)
+    year = values.group(3)
+    page_start = values.group(4)
+    page_end = values.group(5)
+    eid = ""
+    doi = "" #get_doi_from_text(journalinfo)
+    title = journalinfo[journalinfo.index('')+1].strip(' ')
     authors = author.split(' and ')
 
 if 'Glossa' in subject:
@@ -119,7 +139,19 @@ if 'Glossa' in subject:
     doi = glossa.group(7)
     authors = author.split(' and ')
 
-if "Language" in subject:
+if "Journal of Language Modelling" in subject:
+    journaltitle = "Journal of Language Modelling"
+    shortjournaltitle = "Journal of Language Modelling"
+    values = re.search('Journal of Language Modelling Vol (\d{1,2}), No (\d{1}) \((\d{4})\), pp. (\d{1,3})–(\d{1,3})', subject)
+    volume, number, year = values.group(1), values.group(2), values.group(3)
+    page_start, page_end = values.group(4), values.group(5)
+    title = ' '.join(journalinfo[:journalinfo.index('')])
+    author = re.sub('\d', '', journalinfo[journalinfo.index('')+1])
+    authors = author.split(' and ')
+    doi = ""
+    eid = ""
+
+if "Language, Volume" in subject:
     journaltitle = "Language"
     shortjournaltitle = "Lg"
     lg_info = journalinfo[:10]
@@ -246,27 +278,43 @@ if 'Syntax' in subject:
     else:
         doi = ""
     eid = ""
-    authors = author.split(' and ')
+    authors = authors.split(' and ')
 
 if "The Linguistic Review" in subject:
     # TLR
     journaltitle = "The Linguistic Review"
     shortjournaltitle = "TLR"
-    author = journalinfo[journalinfo.index('')+1]
-    title = ' '.join(journalinfo[:journalinfo.index('')])[:-1]
+    author = journalinfo[journalinfo.index('')+1:journalinfo.index('Abstract')-1]
+    title = ' '.join(journalinfo[:journalinfo.index('')])
     values = re.search('The Linguistic Review (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
-            subject)
+            journalinfo[-7])
     volume, year = values.group(1), values.group(2)
     number = ''
     page_start, page_end = values.group(3), values.group(4)
-    doi = ""
+    doi = get_doi_from_text(journalinfo)
     eid = ""
-    authors = author.split(' AND ')
+    if len(author) > 1:
+        authors = author[0].split(', ') + [author[1]]
+        authors = [re.sub(' AND', '', auth) for auth in authors]
+    else:
+        authors = author.split(' AND ')
+
+if "Theoretical Linguistics" in subject:
+    journaltitle = "Theoretical Linguistics"
+    shortjournaltitle = "Theoretical Linguistics"
+    title = journalinfo[journalinfo.index(subject)+3]
+    values = re.search('Theoretical Linguistics (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
+    volume, number, year = values.group(2), values.group(3), values.group(1)
+    page_start, page_end = values.group(4), values.group(5)
+    eid = ""
+    doi = get_doi_from_text(journalinfo)
+    author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
 subtitle = ''
 if ':' in title:
-    subtitle = title.split(': ')[1]
+    subtitle = title.split(': ')[1].capitalize()
     title = title.split(':')[0]
 if '_' in title:
     subtitle = title.split('_ ')[1]
@@ -291,7 +339,7 @@ def name_authors(author_list):
         for author in author_list:
             citekey = citekey + HumanName(author).last.title().replace(' ', '')
         for i in range(len(author_list)-1):
-            names_file = names_file + HumanName(author_list[i]).last.title() + ' and '
+            names_file = names_file + HumanName(author_list[i]).last.title() + ', '
             names_full = names_full + HumanName(author_list[i]).last.title() + ', ' + \
                     HumanName(author_list[i]).first.title() + pad(HumanName(author_list[i]).middle) + ' and '
         names_file = names_file + HumanName(author_list[-1]).last.title()
