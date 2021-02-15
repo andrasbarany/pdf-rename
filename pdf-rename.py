@@ -192,15 +192,13 @@ if 'Linguistic Inquiry' in subject:
     shortjournaltitle = "LI"
     # The page numbers are one item further than info
     pages = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]+1]
-    print(pages)
     page_start, page_end = re.search('(\d{1,3})(–|-)(.*)', pages).group(1), re.search('(\d{1,3})(–|-)(.*)', pages).group(3)
+    if 'Remarks' in li_info[0]:
+        li_info = li_info[li_info.index('')+1:]
     title = ' '.join(li_info[0:li_info.index('')])
     authors = li_info[li_info.index('')+1:]
     authors = authors[:authors.index('')]
-    if type(re.search('(10.*)', li_info[-1])) == re.Match:
-        doi = get_doi_from_text(li_info)
-    else:
-        doi = ""
+    doi = get_doi_from_text(li_text)
     eid = ""
 
 if 'Nat Lang' in subject:
