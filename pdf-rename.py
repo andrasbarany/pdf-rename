@@ -316,8 +316,13 @@ if "The Linguistic Review" in subject:
     if len(author) > 1:
         authors = author[0].split(', ') + [author[1]]
         authors = [re.sub(' AND', '', auth) for auth in authors]
+        authors = [re.sub(' and', '', auth) for auth in authors]
+    elif type(author) == list:
+        authors = author[0].split(' AND ')
+        authors = author[0].split(' and ')
     else:
         authors = author.split(' AND ')
+        authors = author.split(' and ')
 
 if "Theoretical Linguistics" in subject:
     journaltitle = "Theoretical Linguistics"
