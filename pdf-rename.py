@@ -96,6 +96,26 @@ if 'Cognition' in subject:
     doi = get_doi_from_text(journalinfo)
     authors = author.split(', ')
 
+if 'Cognitive Science' in subject:
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    journaltitle = "Cognitive Science"
+    shortjournaltitle = "Cognitive Science"
+    values = re.search('Cognitive Science (\d{1,4}).(\d{1,2}):(\d{1,4})-(\d{1,4})', doc.info[0]['Subject'].decode('UTF-8'))
+    year = values.group(1)
+    volume = values.group(2)
+    number = ""
+    page_start = values.group(3)
+    page_end = values.group(4)
+    eid = ""
+    if doc.info[0]['WPS-ARTICLEDOI'] != "":
+        doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
+    else:
+        doi = get_doi_from_text(journalinfo)
+    author = journalinfo[journalinfo.index('')+3]
+    author = re.sub('u¨', 'ü', author)
+    author = re.sub('o¨', 'ö', author)
+    authors = author.split(', ')
+
 if 'Comparative Germanic Linguistics' in subject:
     journaltitle = "Journal of Comparative Germanic Linguistics"
     shortjournaltitle = "JCGL"
