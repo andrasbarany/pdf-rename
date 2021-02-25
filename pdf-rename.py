@@ -37,7 +37,10 @@ journals = ['Journal of Comparative Germanic Linguistics',
             ]
 
 def get_doi_from_text(text):
-    doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
+    try:
+        doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
+    except IndexError:
+        doi = ""
     return(doi)
 
 if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'':
@@ -79,7 +82,7 @@ if subject == 'JSTOR':
     title = journalinfo[author_field_index-1].strip(' \$')
     author = journalinfo[author_field_index].strip('Author(s):').strip()
     authors = author.split(' and ')
-    doi = ""
+    doi = get_doi_from_text(journalinfo)
     eid = ""
 
 if 'Cognition' in subject:
@@ -120,22 +123,30 @@ if 'Comparative Germanic Linguistics' in subject:
     journaltitle = "The Journal of Comparative Germanic Linguistics"
     shortjournaltitle = "JCGL"
     values = re.search('Journal of Comparative Germanic Linguistics (\d{1,3}): (\d{1,4})–(\d{1,4}), (\d{4})', subject)
+    volume = values.group(1)
+    number = ""
+    year = values.group(4)
+    page_start = values.group(2)
+    page_end = values.group(3)
     if values == None:
         journalinfo = extract_text(filename, maxpages=1).split('\n')
         subject = [line for line in journalinfo if 'Comp German' in line][0]
         values = re.search('J Comp German Linguistics \((\d{4})\) (\d{1,3}):(\d{1,4})–(\d{1,4})', subject)
-    volume = values.group(2)
-    number = ""
-    year = values.group(1)
-    page_start = values.group(3)
-    page_end = values.group(4)
+        volume = values.group(2)
+        number = ""
+        year = values.group(1)
+        page_start = values.group(3)
+        page_end = values.group(4)
     eid = ""
     doi = get_doi_from_text(journalinfo)
-    if author == "":
-        author = re.sub('\d', '', journalinfo[11])
-    else:
-        author = re.sub('ˇc', 'č', journalinfo[7])
-        author = re.sub('1$', '', author)
+    try:
+        if author == "":
+            author = re.sub('\d', '', journalinfo[11])
+        else:
+            author = re.sub('ˇc', 'č', journalinfo[7])
+            author = re.sub('1$', '', author)
+    except NameError:
+        author = ""
     authors = author.split(' and ')
 
 if 'Journal ofGermanic Linguistics' in subject:
