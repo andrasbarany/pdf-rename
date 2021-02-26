@@ -31,6 +31,7 @@ journals = ['Journal of Comparative Germanic Linguistics',
             'Language, Volume',
             'Lingua',
             'Linguistic Inquiry',
+            'Linguistic Typology',
             'Nat Lang',
             'The Linguistic Review',
             'Theoretical Linguistics'
@@ -271,6 +272,19 @@ if 'Linguistic Inquiry' in subject:
     authors = authors[:authors.index('')]
     doi = get_doi_from_text(li_text)
     eid = ""
+
+if "Linguistic Typology 2" in subject:
+    journaltitle = "Linguistic Typology"
+    shortjournaltitle = "Linguistic Typology"
+    title = journalinfo[journalinfo.index(subject)+3]
+    values = re.search('Linguistic Typology (\d{4}); (\d{1,2})\((\d{1})\): (\d{1,4})–(\d{1,4})', subject)
+    volume, number, year = values.group(2), values.group(3), values.group(1)
+    page_start, page_end = values.group(4), values.group(5)
+    eid = ""
+    doi = get_doi_from_text(journalinfo)
+    author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    authors = author.split(' and ')
+
 
 if 'Nat Lang' in subject:
     # NLLT
