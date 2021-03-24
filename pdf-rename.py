@@ -25,7 +25,8 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['Journal of Comparative Germanic Linguistics',
+journals = ['J. Linguistics',
+            'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
             'Journal of Language Modelling',
             'Language, Volume',
@@ -39,7 +40,7 @@ journals = ['Journal of Comparative Germanic Linguistics',
 
 def get_doi_from_text(text):
     try:
-        doi = re.search('(10.*)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
+        doi = re.search('(10.+?)( |$)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
     except IndexError:
         doi = ""
     return(doi)
@@ -149,6 +150,27 @@ if 'Comparative Germanic Linguistics' in subject:
     except NameError:
         author = ""
     authors = author.split(' and ')
+
+if 'J. Linguistics' in subject:
+    journaltitle = "Journal of Linguistics"
+    shortjournaltitle = "JoL"
+    values = re.search('J. Linguistics (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
+    volume = values.group(1)
+    number = ""
+    year = values.group(2)
+    page_start = values.group(3)
+    page_end = values.group(4)
+    doi = get_doi_from_text(journalinfo)
+    # title starts after a newline
+    title_start = journalinfo[journalinfo.index('')+1]
+    # title ends before the first author's name in upper case
+    title_end = journalinfo[[journalinfo.index(author) for author in journalinfo[:15] if author.isupper()][0]-1]
+    if title_start != title_end:
+        title = re.sub('1$', '', title_start + ' ' + title_end)
+    else:
+        title = re.sub('1$', '', title_start)
+    authors = [re.sub(' ', '', author).title() for author in journalinfo[:15] if author.isupper()]
+    eid = ""
 
 if 'Journal ofGermanic Linguistics' in subject:
     journaltitle = "Journal of Germanic Linguistics"
