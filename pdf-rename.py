@@ -106,7 +106,11 @@ if 'BEHAVIORAL AND BRAIN' in subject:
     volume = str(int(year)-1977)
     number = ""
     doi = get_doi_from_text(journalinfo)
-    # title and authors
+    # Title and authors are separated by empty strings (''); these are replaced
+    # by subsequent numbers starting from 1; the title is then the list of
+    # strings from the index of '1'+1 to the index of '2'; the list of authors
+    # starts at that '2'+1 and goes on to n+1 where n is the final original
+    # empty string before the field containing the string 'Abstract:'.
     i = 1
     for item in journalinfo:
         if item == '':
