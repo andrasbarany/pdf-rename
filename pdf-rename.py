@@ -5,6 +5,7 @@ from nameparser import HumanName
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.high_level import extract_text
+from pdfminer.pdftypes import PDFObjRef
 import re
 import subprocess
 
@@ -25,7 +26,8 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-journals = ['J. Linguistics',
+journals = ['BEHAVIORAL AND BRAIN',
+            'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
             'Journal of Language Modelling',
@@ -40,20 +42,20 @@ journals = ['J. Linguistics',
 
 def get_doi_from_text(text):
     try:
-        doi = re.search('(10.+?)( |$)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
+        doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
     except IndexError:
         doi = ""
     return(doi)
 
-if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'':
+if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'' and not type(doc.info[0]['Author']) != str:
     author = doc.info[0]['Author'].decode('ISO-8859-1')
 
-if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'':
+if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'' and not type(doc.info[0]['Title']) != str:
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
 else:
     title = ""
 
-if 'Subject' in doc.info[0] and doc.info[0]['Subject'] != b'':
+if 'Subject' in doc.info[0] and not isinstance(doc.info[0]['Subject'], PDFObjRef) and doc.info[0]['Subject'] != b'' and 'Downloaded from' not in doc.info[0]['Subject'].decode('UTF-8'):
     subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
 else:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
@@ -86,6 +88,36 @@ if subject == 'JSTOR':
     authors = author.split(' and ')
     doi = get_doi_from_text(journalinfo)
     eid = ""
+
+if 'BEHAVIORAL AND BRAIN' in subject:
+    journaltitle = "Behavioral and Brain Sciences"
+    shortjournaltitle = "Behav. Brain Sci."
+    if 'Page' in journalinfo[0]:
+        values = re.search('BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\), Page (\d{1}) of (\d{1,3})', journalinfo[0])
+        page_start = values.group(2)
+        page_end = values.group(3)
+        eid = re.search('doi:.+?e(\d{1,3})', journalinfo[1]).group(1)
+    else:
+        values = re.search('BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\) (\d{1,2}), (\d{1,3}) –(\d{1,3})', journalinfo[0])
+        page_start = values.group(3)
+        page_end = values.group(4)
+        eid = ""
+    year = values.group(1)
+    volume = str(int(year)-1977)
+    number = ""
+    doi = get_doi_from_text(journalinfo)
+    # title and authors
+    i = 1
+    for item in journalinfo:
+        if item == '':
+            journalinfo[journalinfo.index(item)] = str(i)
+            i = i+1
+    title = ' '.join(journalinfo[journalinfo.index('1')+1:journalinfo.index('2')])
+    subtitle = ""
+    authors = []
+    author_end = int(journalinfo[[journalinfo.index(x) for x in journalinfo if 'Abstract:' in x][0]-1])
+    for n in range(2, author_end):
+        authors.append(journalinfo[journalinfo.index(str(n))+1])
 
 if 'Cognition' in subject:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
@@ -393,7 +425,7 @@ if "Theoretical Linguistics" in subject:
 
 title = re.sub(' \x10', '-', title)
 subtitle = ''
-if ':' in title:
+if ': ' in title:
     subtitle = title.split(': ')[1].capitalize()
     title = title.split(':')[0]
 if '_' in title:
