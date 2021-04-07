@@ -41,16 +41,31 @@ journals = ['BEHAVIORAL AND BRAIN',
             ]
 
 def get_doi_from_text(text):
+    """Extract DOI from text."""
     try:
         doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
     except IndexError:
         doi = ""
     return(doi)
 
-if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'' and not type(doc.info[0]['Author']) != str:
+def tag_empty_items(list):
+    """
+    Replace empty strings ('') by strings of subsequent integers starting with 1.
+
+    This allows addressing the items before and after because one can access
+    the indexes of the strings of integers.
+    """
+    i = 1
+    for item in list:
+        if item == '':
+            list[list.index(item)] = str(i)
+            i = i+1
+    return(list)
+
+if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'' and not type(doc.info[0]['Author'].decode('ISO-8859-1')) != str:
     author = doc.info[0]['Author'].decode('ISO-8859-1')
 
-if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'' and not type(doc.info[0]['Title']) != str:
+if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'' and not type(doc.info[0]['Title'].decode('ISO-8859-1')) != str:
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
 else:
     title = ""
@@ -106,18 +121,15 @@ if 'BEHAVIORAL AND BRAIN' in subject:
     volume = str(int(year)-1977)
     number = ""
     doi = get_doi_from_text(journalinfo)
-    # Title and authors are separated by empty strings (''); these are replaced
-    # by subsequent numbers starting from 1; the title is then the list of
-    # strings from the index of '1'+1 to the index of '2'; the list of authors
-    # starts at that '2'+1 and goes on to n+1 where n is the final original
-    # empty string before the field containing the string 'Abstract:'.
-    i = 1
-    for item in journalinfo:
-        if item == '':
-            journalinfo[journalinfo.index(item)] = str(i)
-            i = i+1
+    # Empty strings ('') are replaced by subsequent numbers starting
+    # from 1 by tag_empty_strings.
+    #
+    # The title is then the list of strings from the index of '1'+1 to the
+    # index of '2'; the list of authors starts at that '2'+1 and goes on to n+1
+    # where n is the final original empty string before the field containing
+    # the string 'Abstract:'.
+    tag_empty_items(journalinfo)
     title = ' '.join(journalinfo[journalinfo.index('1')+1:journalinfo.index('2')])
-    subtitle = ""
     authors = []
     author_end = int(journalinfo[[journalinfo.index(x) for x in journalinfo if 'Abstract:' in x][0]-1])
     for n in range(2, author_end):
@@ -135,6 +147,12 @@ if 'Cognition' in subject:
     page_end = ""
     eid = values.group(3)
     doi = get_doi_from_text(journalinfo)
+    tag_empty_items(journalinfo)
+    title = journalinfo[journalinfo.index('4')+1]
+    author_start = int(journalinfo.index('5')-1)
+    author_end = int(journalinfo.index('6')-1)
+    try: author
+    except NameError: author = re.sub('(\*)|(\d)|( [a-z],)', '', journalinfo[author_start] + journalinfo[author_end])
     authors = author.split(', ')
 
 if 'Cognitive Science' in subject:
@@ -259,6 +277,16 @@ if "Language, Volume" in subject:
     page_start, page_end = values.group(4)+values.group(5), values.group(6)+values.group(7)
     doi = get_doi_from_text(lg_info)
     eid = ""
+    if 'þÿ' in title:
+        title_list = title.split('þÿ')[1].split('\x00')
+        title = ''
+        for char in title_list:
+            title = title + char
+    if 'þÿ' in author:
+        author_list = author.split('þÿ')[1].split('\x00')
+        author = ''
+        for char in author_list:
+            author = author + char
     authors = author.split(', ')
 
 if "Language and Linguistics Compass" in subject:
