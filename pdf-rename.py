@@ -35,7 +35,8 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Lingua',
             'Linguistic Inquiry',
             'Linguistic Typology',
-            'Nat Lang',
+            'Nat Lang Ling',
+            'Nat Lang Semantics',
             'The Linguistic Review',
             'Theoretical Linguistics'
             ]
@@ -372,7 +373,7 @@ if "Linguistic Typology 2" in subject:
     authors = author.split(' and ')
 
 
-if 'Nat Lang' in subject:
+if 'Nat Lang Ling' in subject:
     # NLLT
     journaltitle = "Natural Language \& Linguistic Theory"
     shortjournaltitle = "NLLT"
@@ -393,6 +394,33 @@ if 'Nat Lang' in subject:
     author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
     author = re.sub('\d', '', author)
     author = re.sub('¸s', 'ş', author)
+    authors = author.split(' · ')
+
+if 'Nat Lang Semantics' in subject:
+    # NLLT
+    journaltitle = "Natural Language Semantics"
+    shortjournaltitle = "Nat Lang Semantics"
+    if 'doi' in doc.info[0]:
+        doi = doc.info[0]['doi'].decode('UTF-8')
+    else:
+        doi = get_doi_from_text(journalinfo)
+    info = extract_text(filename, maxpages=1).split('\n')[:10]
+    nllt = re.search('.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})', info[0])
+    year = nllt.group(1)
+    volume = nllt.group(2)
+    number = ""
+    if title == "":
+        title = info[info.index('')+1:]
+        title = ' '.join(title[:title.index('')])
+    eid = ""
+    page_start = nllt.group(4)
+    page_end = nllt.group(6)
+    author = info[info.index('')+1:]
+    author = author[author.index('')+1:]
+    author = author[:author.index('')][0]
+    author = re.sub('\d', '', author)
+    author = re.sub('¸s', 'ş', author)
+    author = re.sub('a´', 'á', author)
     authors = author.split(' · ')
 
 if 'Syntax' in subject:
