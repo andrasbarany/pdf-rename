@@ -38,7 +38,8 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Nat Lang Ling',
             'Nat Lang Semantics',
             'The Linguistic Review',
-            'Theoretical Linguistics'
+            'Theoretical Linguistics',
+            'TO CITE THIS ARTICLE' # newer Glossa
             ]
 
 def get_doi_from_text(text):
@@ -242,7 +243,6 @@ if 'Journal ofGermanic Linguistics' in subject:
     authors = author.split(' and ')
 
 if 'Glossa' in subject:
-    # Glossa
     #author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
     journaltitle = "Glossa: a journal of general linguistics"
     shortjournaltitle = "Glossa"
@@ -254,6 +254,27 @@ if 'Glossa' in subject:
     page_start = glossa.group(5)
     page_end = glossa.group(6)
     doi = glossa.group(7)
+    authors = author.split(' and ')
+
+if 'TO CITE THIS ARTICLE' in subject:
+    journaltitle = "Glossa: a journal of general linguistics"
+    shortjournaltitle = "Glossa"
+    journalinfo = journalinfo[journalinfo.index('TO CITE THIS ARTICLE:'):]
+    journalinfo = ''.join(journalinfo[1:journalinfo.index('')])
+    # Lau, Elaine and Nozomi Tanaka. 2021. The subject advantage in relative
+    # clauses: A review. Glossa: a journal of general linguistics 6(1): 34.
+    # 1–34. DOI:
+    glossa = re.search('([A-Za-z].*). (\d{4}). (.+?). ' +
+                       'Glossa: a journal of general linguistics ' +
+                       '(\d{1,2})\((\d{1})\): (\d{1,3}). (\d{1})–(\d{1,3}). ' +
+                       'DOI: https://doi.org/(.*)', journalinfo)
+    author = glossa.group(1)
+    year = glossa.group(2)
+    title = glossa.group(3)
+    volume, number = glossa.group(4), glossa.group(5)
+    eid = glossa.group(6)
+    page_start, page_end = glossa.group(7), glossa.group(8)
+    doi = glossa.group(9)
     authors = author.split(' and ')
 
 if "Journal of Language Modelling" in subject:
