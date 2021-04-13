@@ -386,15 +386,15 @@ if 'Linguistic Inquiry' in subject:
 if "Linguistic Typology 2" in subject:
     journaltitle = "Linguistic Typology"
     shortjournaltitle = "Linguistic Typology"
-    title = journalinfo[journalinfo.index(subject)+3]
+    tag_empty_items(journalinfo)
+    title = ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')])
     values = re.search('Linguistic Typology (\d{4}); (\d{1,2})\((\d{1})\): (\d{1,4})–(\d{1,4})', subject)
     volume, number, year = values.group(2), values.group(3), values.group(1)
     page_start, page_end = values.group(4), values.group(5)
     eid = ""
     doi = get_doi_from_text(journalinfo)
-    author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    author = re.sub('\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
-
 
 if 'Nat Lang Ling' in subject:
     # NLLT
