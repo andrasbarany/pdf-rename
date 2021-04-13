@@ -13,10 +13,12 @@ parser = argparse.ArgumentParser(description='Rename PDFs automatically \
                                 to include author(s), year, and title.')
 parser.add_argument('filename', metavar='filename', type=str,
                     help='PDF to rename')
-parser.add_argument('--rename', action='store_true',
-                    help='rename PDF file')
 parser.add_argument('--biblatex', action='store_true',
                     help='create biblatex entry')
+parser.add_argument('--copy', action='store_true',
+                    help='rename PDF file and keep original')
+parser.add_argument('--rename', action='store_true',
+                    help='rename PDF file and delete original')
 
 args = parser.parse_args()
 
@@ -563,12 +565,19 @@ def write_bibentry():
 
     print(entry)
 
+if vars(args)['copy']:
+    print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
+        "in", shortjournaltitle + ".\n")
+    # rename file
+    print("Okay, renaming file to (keeping original):", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
+    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
+
 if vars(args)['rename']:
     print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
         "in", shortjournaltitle + ".\n")
     # rename file
     print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
-    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
+    subprocess.run(['mv', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 if vars(args)['biblatex']:
     # write biblatex entry
