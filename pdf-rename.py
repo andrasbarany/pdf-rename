@@ -47,9 +47,13 @@ journals = ['BEHAVIORAL AND BRAIN',
 def get_doi_from_text(text):
     """Extract DOI from text."""
     try:
-        doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if 'doi.org' in x or 'doi:' in x or 'DOI ' in x][0]]).group(1)
+        doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if '10.' in x or 'doi.org' in x or 'doi: ' in x or 'DOI ' in x][0]]).group(1)
     except IndexError:
         doi = ""
+    except AttributeError:
+        doi = ""
+    if doi == "" and vars(args)['biblatex']:
+        print("Couldn't get DOI.\n")
     return(doi)
 
 def tag_empty_items(list):
@@ -104,6 +108,21 @@ if subject == 'JSTOR':
     author_field_index = [journalinfo.index(x) for x in journalinfo if 'Author(s): ' in x][0]
     title = journalinfo[author_field_index-1].strip(' \$')
     author = journalinfo[author_field_index].strip('Author(s):').strip()
+    authors = author.split(' and ')
+    doi = get_doi_from_text(journalinfo)
+    eid = ""
+
+if 'Annu. Rev. Linguist' in subject:
+    if vars(args)['biblatex']:
+        print("Please doublecheck DOI.\n")
+    journaltitle = "Annual Review of Linguistics"
+    shortjournaltitle = "Annu Rev Linguist"
+    journalinfo = extract_text(filename, maxpages=1).split('\n')[:55]
+    values = re.search('Annu. Rev. Linguist. (\d{4}).(\d{1}):(.+?)-(.*)', subject)
+    year = values.group(1)
+    volume = values.group(2)
+    number = ""
+    page_start, page_end = values.group(3), values.group(4)
     authors = author.split(' and ')
     doi = get_doi_from_text(journalinfo)
     eid = ""
@@ -385,7 +404,7 @@ if 'Linguistic Inquiry' in subject:
 
 if "Linguistic Typology 2" in subject:
     journaltitle = "Linguistic Typology"
-    shortjournaltitle = "Linguistic Typology"
+    shortjournaltitle = "Linguist Typol"
     tag_empty_items(journalinfo)
     title = ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')])
     values = re.search('Linguistic Typology (\d{4}); (\d{1,2})\((\d{1})\): (\d{1,4})–(\d{1,4})', subject)
