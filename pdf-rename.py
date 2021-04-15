@@ -71,6 +71,9 @@ def tag_empty_items(list):
             i = i+1
     return(list)
 
+def get_index(string, list):
+    return [i for i, s in enumerate(list) if string in s][0]
+
 if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'' and not type(doc.info[0]['Author'].decode('ISO-8859-1')) != str:
     author = doc.info[0]['Author'].decode('ISO-8859-1')
 
@@ -108,9 +111,7 @@ if subject == 'JSTOR':
     title = journalinfo[author_field_index-1].strip(' \$')
     author = journalinfo[author_field_index].strip('Author(s):').strip()
     # identify items containing "Source: ..." and "Publisher: ..."
-    index_source = [i for i, s in enumerate(journalinfo) if 'Source: ' in s][0]
-    index_publisher = [i for i, s in enumerate(journalinfo) if 'Published by: ' in s][0]
-    journalinfo = ' '.join(journalinfo[index_source:index_publisher])
+    journalinfo = ' '.join(journalinfo[get_index('Source: ', journalinfo):get_index('Published', journalinfo)])
     values_two = re.search('No. (\d{1}).+?(\d{4}).+?pp.+?(\d{1,4})-(\d{1,4})', journalinfo)
     if isinstance(values_two, re.Match):
         number = values_two.group(1)
