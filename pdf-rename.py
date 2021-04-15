@@ -104,14 +104,24 @@ if subject == 'JSTOR':
     else:
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
-    values_two = re.search('No. (\d{1}).+?(\d{4}).+?pp. (\d{1,4})-(\d{1,4})', journalinfo[[journalinfo.index(x) for x in journalinfo if 'Source: ' in x][0]])
-    number = values_two.group(1)
-    year = values_two.group(2)
-    page_start = values_two.group(3)
-    page_end = values_two.group(4)
     author_field_index = [journalinfo.index(x) for x in journalinfo if 'Author(s): ' in x][0]
     title = journalinfo[author_field_index-1].strip(' \$')
     author = journalinfo[author_field_index].strip('Author(s):').strip()
+    # identify items containing "Source: ..." and "Publisher: ..."
+    index_source = [i for i, s in enumerate(journalinfo) if 'Source: ' in s][0]
+    index_publisher = [i for i, s in enumerate(journalinfo) if 'Published by: ' in s][0]
+    journalinfo = ' '.join(journalinfo[index_source:index_publisher])
+    values_two = re.search('No. (\d{1}).+?(\d{4}).+?pp.+?(\d{1,4})-(\d{1,4})', journalinfo)
+    if isinstance(values_two, re.Match):
+        number = values_two.group(1)
+        year = values_two.group(2)
+        page_start = values_two.group(3)
+        page_end = values_two.group(4)
+    else:
+        number = ""
+        year = ""
+        page_start = ""
+        page_end = ""
     authors = author.split(' and ')
     doi = get_doi_from_text(journalinfo)
     eid = ""
