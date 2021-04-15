@@ -8,6 +8,7 @@ from pdfminer.high_level import extract_text
 from pdfminer.pdftypes import PDFObjRef
 import re
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser(description='Rename PDFs automatically \
                                 to include author(s), year, and title.')
@@ -48,10 +49,10 @@ def get_doi_from_text(text):
     """Extract DOI from text."""
     try:
         doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if '10.' in x or 'doi.org' in x or 'doi: ' in x or 'DOI ' in x][0]]).group(1)
-    except IndexError:
+    except IndexError or AttributeError:
         doi = ""
-    except AttributeError:
-        doi = ""
+#    except AttributeError:
+#        doi = ""
     if doi == "" and vars(args)['biblatex']:
         print("Couldn't get DOI.\n")
     return(doi)
@@ -78,16 +79,19 @@ if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'' and not type(doc.info[
 else:
     title = ""
 
-if 'Subject' in doc.info[0] and not isinstance(doc.info[0]['Subject'], PDFObjRef) and doc.info[0]['Subject'] != b'' and 'Downloaded from' not in doc.info[0]['Subject'].decode('UTF-8'):
-    subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
-else:
-    journalinfo = extract_text(filename, maxpages=1).split('\n')
-    if any('Source: ' in line for line in journalinfo):
-        # remove empty strings
-        journalinfo = [str for str in journalinfo if str]
-        subject = 'JSTOR'
+try:
+    if 'Subject' in doc.info[0] and not isinstance(doc.info[0]['Subject'], PDFObjRef) and doc.info[0]['Subject'] != b'' and 'Downloaded from' not in doc.info[0]['Subject'].decode('UTF-8'):
+        subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
     else:
-        subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
+        journalinfo = extract_text(filename, maxpages=1).split('\n')
+        if any('Source: ' in line for line in journalinfo):
+            # remove empty strings
+            journalinfo = [str for str in journalinfo if str]
+            subject = 'JSTOR'
+        else:
+            subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
+except IndexError or NameError:
+    sys.exit("Sorry, I'm having trouble identifying the journal... Exiting.\n")
 
 if subject == 'JSTOR':
     values_one = re.search('Source: (.+?),.+?Vol. (\d{1,2})', journalinfo[[journalinfo.index(x) for x in journalinfo if 'Source: ' in x][0]])
