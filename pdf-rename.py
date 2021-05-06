@@ -42,7 +42,8 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Nat Lang Semantics',
             'The Linguistic Review',
             'Theoretical Linguistics',
-            'TO CITE THIS ARTICLE' # newer Glossa
+            'TO CITE THIS ARTICLE', # newer Glossa
+            'Zeitschrift für Sprachwissenschaft'
             ]
 
 def get_doi_from_text(text):
@@ -531,13 +532,56 @@ if "The Linguistic Review" in subject:
 if "Theoretical Linguistics" in subject:
     journaltitle = "Theoretical Linguistics"
     shortjournaltitle = "Theoretical Linguistics"
-    title = journalinfo[journalinfo.index(subject)+3]
     values = re.search('Theoretical Linguistics (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
-    volume, number, year = values.group(2), values.group(3), values.group(1)
-    page_start, page_end = values.group(4), values.group(5)
+    if values == None:
+        values = re.search('Theoretical Linguistics (\d{1,2})–(\d{1}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
+        volume, number, year = values.group(1), values.group(2), values.group(3)
+        page_start, page_end = values.group(4), values.group(5)
+    else:
+        volume, number, year = values.group(2), values.group(3), values.group(1)
+        page_start, page_end = values.group(4), values.group(5)
     eid = ""
     doi = get_doi_from_text(journalinfo)
-    author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    # Authors and titles are handled differently for different years ...
+    # Post 2007
+    if int(year) > 2007:
+        title = journalinfo[journalinfo.index(subject)+3]
+        author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    else:
+        # Up to 2007 (at least)
+        tag_empty_items(journalinfo)
+        title = ' '.join(journalinfo[:get_index('1', journalinfo)])
+        author = ' '.join(journalinfo[get_index('1', journalinfo):get_index('2', journalinfo)])
+        author = re.sub('\*', '', author)
+        author = re.sub('\d', '', author)
+        authors = author.split(' and ')
+
+if "Zeitschrift für Sprachwissenschaft" in subject:
+    journaltitle = "Zeitschrift für Sprachwissenschaft"
+    shortjournaltitle = "Zeitschrift für Sprachwissenschaft"
+    values = re.search('Zeitschrift für Sprachwissenschaft (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
+    if values == None:
+        #values = re.search('Zeitschrift für Sprachwissenschaft (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
+        values = re.search('Zeitschrift für Sprachwissenschaft (\d{1,2}) \((\d{4})\), (\d{1,4})\(cid:2\)(\d{1,4})', subject)
+        volume, number, year = values.group(1), '', values.group(2)
+        page_start, page_end = values.group(3), values.group(4)
+    else:
+        volume, number, year = values.group(2), values.group(3), values.group(1)
+        page_start, page_end = values.group(4), values.group(5)
+    eid = ""
+    doi = get_doi_from_text(journalinfo)
+    # Authors and titles are handled differently for different years ...
+    # Post 2009
+    if int(year) > 2009:
+        title = journalinfo[journalinfo.index(subject)+3]
+        author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+    else:
+        # Up to 2009 (at least)
+        tag_empty_items(journalinfo)
+        title = ' '.join(journalinfo[:get_index('1', journalinfo)])
+        author = ' '.join(journalinfo[get_index('1', journalinfo):get_index('2', journalinfo)])
+        author = re.sub('\*', '', author)
+        author = re.sub('\d', '', author)
     authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
