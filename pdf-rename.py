@@ -244,9 +244,11 @@ if 'Comparative Germanic Linguistics' in subject:
         author = ""
     authors = author.split(' and ')
 
-if 'J. Linguistics' in subject:
+if 'J. Linguistics' in subject or 'Journal of Linguistics' in subject:
     journaltitle = "Journal of Linguistics"
     shortjournaltitle = "JoL"
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
     values = re.search('J. Linguistics (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
     volume = values.group(1)
     number = ""
@@ -259,9 +261,9 @@ if 'J. Linguistics' in subject:
     # title ends before the first author's name in upper case
     title_end = journalinfo[[journalinfo.index(author) for author in journalinfo[:15] if author.isupper()][0]-1]
     if title_start != title_end:
-        title = re.sub('1$', '', title_start + ' ' + title_end)
+        title = re.sub('\d$', '', title_start + ' ' + title_end)
     else:
-        title = re.sub('1$', '', title_start)
+        title = re.sub('\d$', '', title_start)
     authors = [re.sub(' ', '', author).title() for author in journalinfo[:15] if author.isupper()]
     eid = ""
 
@@ -534,7 +536,7 @@ if "Theoretical Linguistics" in subject:
     shortjournaltitle = "Theoretical Linguistics"
     values = re.search('Theoretical Linguistics (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
     if values == None:
-        values = re.search('Theoretical Linguistics (\d{1,2})–(\d{1}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
+        values = re.search('Theoretical Linguistics (\d{1,2}).(\d.+?) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
         volume, number, year = values.group(1), values.group(2), values.group(3)
         page_start, page_end = values.group(4), values.group(5)
     else:
@@ -544,11 +546,11 @@ if "Theoretical Linguistics" in subject:
     doi = get_doi_from_text(journalinfo)
     # Authors and titles are handled differently for different years ...
     # Post 2007
-    if int(year) > 2007:
+    if int(year) > 2011:
         title = journalinfo[journalinfo.index(subject)+3]
         author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
     else:
-        # Up to 2007 (at least)
+        # Up to 2011 (at least)
         tag_empty_items(journalinfo)
         title = ' '.join(journalinfo[:get_index('1', journalinfo)])
         author = ' '.join(journalinfo[get_index('1', journalinfo):get_index('2', journalinfo)])
