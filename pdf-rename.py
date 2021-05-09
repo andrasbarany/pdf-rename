@@ -30,6 +30,7 @@ with open(filename, 'rb') as f:
     doc = PDFDocument(parse)
 
 journals = ['BEHAVIORAL AND BRAIN',
+            'Cognitive Psychology',
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
@@ -190,6 +191,25 @@ if 'Cognition' in subject:
     title = journalinfo[journalinfo.index('4')+1]
     author_start = int(journalinfo.index('5')-1)
     author_end = int(journalinfo.index('6')-1)
+    try: author
+    except NameError: author = re.sub('(\*)|(\d)|( [a-z],)', '', journalinfo[author_start] + journalinfo[author_end])
+    authors = author.split(', ')
+
+if 'Cognitive Psychology' in subject:
+    journalinfo = extract_text(filename, maxpages=1).split('\n')
+    journaltitle = "Cognitive Psychology"
+    shortjournaltitle = "Cognitive Psychology"
+    values = re.search('Cognitive Psychology (\d{1,3}) \((\d{4})\) (\d{1,3})–(\d{1,3})', journalinfo[0])
+    volume = values.group(1)
+    number = ""
+    year = values.group(2)
+    page_start = values.group(3)
+    page_end = values.group(4)
+    eid = ""
+    doi = get_doi_from_text(journalinfo)
+    tag_empty_items(journalinfo)
+    title = ' '.join(journalinfo[journalinfo.index('4')+1:journalinfo.index('5')])
+    author = ' '.join(journalinfo[journalinfo.index('5')+1:journalinfo.index('6')])
     try: author
     except NameError: author = re.sub('(\*)|(\d)|( [a-z],)', '', journalinfo[author_start] + journalinfo[author_end])
     authors = author.split(', ')
