@@ -229,7 +229,9 @@ if 'Cognitive Science' in subject:
         doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
     else:
         doi = get_doi_from_text(journalinfo)
-    author = journalinfo[journalinfo.index('')+3]
+    tag_empty_items(journalinfo)
+    author = journalinfo[journalinfo.index('2')+1]
+    author = re.sub(',\w', ',', author)
     author = re.sub('u¨', 'ü', author)
     author = re.sub('o¨', 'ö', author)
     authors = author.split(', ')
