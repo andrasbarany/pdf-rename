@@ -23,11 +23,15 @@ parser.add_argument('--rename', action='store_true',
 
 args = parser.parse_args()
 
+# Reading in file.
+
 filename = vars(args)['filename']
 
 with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
+
+# Identify journals.
 
 journals = ['BEHAVIORAL AND BRAIN',
             'Cognitive Psychology',
@@ -62,19 +66,19 @@ def get_doi_from_text(text):
 
 def split_string(string):
     """
-    Extract names from strings with structure "Name1, NameB and NameC.
+    Convert a string of names separated by commas and “and” to a list.
+
+    A string of the structure "Name1, Name2 and Name3" is converted to
+    a list where each item corresponds to a name.
     """
-    l1 = string.split(',')
-    l2 = l1[-1].split('and')
-    l3 = l1[:-1] + l2
-    return(l3)
+    return(string.split(',')[:-1] + string.split(',')[-1].split('and'))
 
 def tag_empty_items(list):
     """
     Replace empty strings ('') by strings of subsequent integers starting with 1.
 
-    This allows addressing the items before and after because one can access
-    the indexes of the strings of integers.
+    This makes it easy to address items before and after what are originally
+    empty strings via the index() method.
     """
     i = 1
     for item in list:
