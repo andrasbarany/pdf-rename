@@ -39,6 +39,7 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Lingua',
             'Linguistic Inquiry',
             'Linguistic Typology',
+            'Linguistics Vanguard',
             'Nat Lang Ling',
             'Nat Lang Semantics',
             'The Linguistic Review',
@@ -58,6 +59,15 @@ def get_doi_from_text(text):
     if doi == "" and vars(args)['biblatex']:
         print("Couldn't get DOI.\n")
     return(doi)
+
+def split_string(string):
+    """
+    Extract names from strings with structure "Name1, NameB and NameC.
+    """
+    l1 = string.split(',')
+    l2 = l1[-1].split('and')
+    l3 = l1[:-1] + l2
+    return(l3)
 
 def tag_empty_items(list):
     """
@@ -456,6 +466,19 @@ if "Linguistic Typology 2" in subject:
     doi = get_doi_from_text(journalinfo)
     author = re.sub('\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
+
+if title == "Linguistics Vanguard" or "Linguistics Vanguard" in subject:
+    journaltitle = "Linguistics Vanguard"
+    shortjournaltitle = "Linguistics Vanguard"
+    values = re.search('Linguistics Vanguard (\d{4}); (\d{1,2})\((.+?)\): (.*)', subject)
+    volume, number, year = values.group(2), values.group(3), values.group(1)
+    page_start, page_end = "1", ""
+    eid = values.group(4)
+    doi = get_doi_from_text(journalinfo)
+    tag_empty_items(journalinfo)
+    title = ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')])
+    author = re.sub('\*', '', journalinfo[2])
+    authors = split_string(author)
 
 if 'Nat Lang Ling' in subject:
     # NLLT
