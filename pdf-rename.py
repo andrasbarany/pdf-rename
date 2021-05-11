@@ -120,6 +120,8 @@ if subject == 'JSTOR':
     elif journaltitle == "Natural Language & Linguistic Theory":
         journaltitle = "Natural Language \& Linguistic Theory"
         shortjournaltitle = "NLLT"
+    elif journaltitle == "Language":
+        shortjournaltitle = "Lg"
     else:
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
