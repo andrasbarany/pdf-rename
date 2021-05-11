@@ -48,21 +48,71 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Nat Lang Semantics',
             'The Linguistic Review',
             'Theoretical Linguistics',
-            'TO CITE THIS ARTICLE', # newer Glossa
+            'TO CITE THIS ARTICLE',     # newer Glossa
             'Zeitschrift für Sprachwissenschaft'
             ]
+
 
 def get_doi_from_text(text):
     """Extract DOI from text (a list of sentences)."""
     try:
-        doi = re.search('(10.+?)( |$|,)', text[[text.index(x) for x in text if '10.' in x or 'doi.org' in x or 'doi: ' in x or 'DOI ' in x][0]]).group(1)
+        doi = re.search('(10.+?)( |$|,)',
+                        text[[text.index(x) for x in text
+                              if '10.' in x
+                              or 'doi.org' in x
+                              or 'doi: ' in x
+                              or 'DOI ' in x][0]]).group(1)
     except IndexError or AttributeError:
         doi = ""
-#    except AttributeError:
-#        doi = ""
     if doi == "" and vars(args)['biblatex']:
         print("Couldn't get DOI.\n")
     return(doi)
+
+
+def get_index(string, list):
+    """
+    Return index of string in list.
+    """
+    return [i for i, s in enumerate(list) if string in s][0]
+
+
+def name_authors(author_list):
+    """Create list of authors separated by ',' and 'and'."""
+    if len(author_list) > 1:
+        citekey = ''
+        names_file = ''
+        names_full = ''
+        for author in author_list:
+            citekey = citekey + HumanName(author).last.title().replace(' ', '')
+        for i in range(len(author_list)-1):
+            names_file = names_file + \
+                         HumanName(author_list[i]).last.title() + ', '
+            names_full = names_full + \
+                HumanName(author_list[i]).last.title() + \
+                ', ' + \
+                HumanName(author_list[i]).first.title() + \
+                pad(HumanName(author_list[i]).middle) + ' and '
+        names_file = names_file + HumanName(author_list[-1]).last.title()
+        names_full = names_full + HumanName(author_list[-1]).last.title() + \
+            ', ' + \
+            HumanName(author_list[-1]).first.title() + \
+            pad(HumanName(author_list[-1]).middle)
+    else:
+        author = HumanName(author_list[0])
+        citekey = author.last.title()
+        names_file = author.last.title()
+        names_full = author.last.title() + ", " + \
+            author.first.title() + pad(author.middle)
+    return [citekey, names_file, names_full]
+
+
+def pad(name):
+    """Add a space if name is a non-empty string."""
+    if name != '':
+        return ' ' + name
+    else:
+        return ''
+
 
 def split_string(string):
     """
@@ -73,12 +123,15 @@ def split_string(string):
     """
     return(string.split(',')[:-1] + string.split(',')[-1].split('and'))
 
+
 def tag_empty_items(list):
     """
-    Replace empty strings ('') by strings of subsequent integers starting with 1.
+    Replace empty strings in list by strings of integers starting with 1.
 
-    This makes it easy to address items before and after what are originally
-    empty strings via the index() method.
+    Replaces empty string items in the input list by strings of subsequent
+    integers starting with '1'. This allows addressing items before and
+    after what are originally empty strings easily using the index method
+    and specifying the integer.
     """
     i = 1
     for item in list:
@@ -87,20 +140,47 @@ def tag_empty_items(list):
             i = i+1
     return(list)
 
-def get_index(string, list):
-    return [i for i, s in enumerate(list) if string in s][0]
 
-if 'Author' in doc.info[0] and doc.info[0]['Author'] != b'' and not type(doc.info[0]['Author'].decode('ISO-8859-1')) != str:
+def write_bibentry():
+    entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
+            + "    author = {" + name_authors(authors)[2] + "},\n" \
+            + "    title = {" + title + "},\n" \
+            + "    subtitle = {" + subtitle + "},\n" \
+            + "    year = {" + year + "},\n" \
+            + "    journaltitle = {" + journaltitle + "},\n" \
+            + "    shortjournaltitle = {" + shortjournaltitle + "},\n" \
+            + "    volume = {" + volume + "},\n" \
+            + "    number = {" + number + "},\n" \
+            + "    pages = {" + page_start + "--" + page_end + "},\n" \
+            + "    doi = {" + doi + "},\n" \
+            + "    eid = {" + eid + "},\n" \
+            + "}"
+    print(entry)
+
+
+# The following two if-statements check for PDF metadata.
+# If they are specified, authors and titles are set based on them.
+
+if ('Author' in doc.info[0]
+        and doc.info[0]['Author'] != b''
+        and not type(doc.info[0]['Author'].decode('ISO-8859-1')) != str):
     author = doc.info[0]['Author'].decode('ISO-8859-1')
 
-if 'Title' in doc.info[0] and doc.info[0]['Title'] != b'' and not type(doc.info[0]['Title'].decode('ISO-8859-1')) != str:
+if ('Title' in doc.info[0]
+        and doc.info[0]['Title'] != b''
+        and not type(doc.info[0]['Title'].decode('ISO-8859-1')) != str):
     title = re.sub(b'\\x84', b'---', doc.info[0]['Title']).decode('ISO-8859-1')
 else:
     title = ""
 
 try:
-    if 'Subject' in doc.info[0] and not isinstance(doc.info[0]['Subject'], PDFObjRef) and doc.info[0]['Subject'] != b'' and 'Downloaded from' not in doc.info[0]['Subject'].decode('UTF-8'):
-        subject = re.sub(b'\\x85', b'-', doc.info[0]['Subject']).decode('ISO-8859-1')
+    if ('Subject' in doc.info[0]
+            and not isinstance(doc.info[0]['Subject'], PDFObjRef)
+            and doc.info[0]['Subject'] != b''
+            and 'Downloaded from' not in
+            doc.info[0]['Subject'].decode('UTF-8')):
+        subject = re.sub(b'\\x85', b'-',
+                         doc.info[0]['Subject']).decode('ISO-8859-1')
     else:
         journalinfo = extract_text(filename, maxpages=1).split('\n')
         if any('Source: ' in line for line in journalinfo):
@@ -108,29 +188,36 @@ try:
             journalinfo = [str for str in journalinfo if str]
             subject = 'JSTOR'
         else:
-            subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
+            subject = [line for line in journalinfo
+                       if any(journal in line for journal in journals)][0]
 except IndexError or NameError:
     sys.exit("Sorry, I'm having trouble identifying the journal... Exiting.\n")
 
 if subject == 'JSTOR':
-    values_one = re.search('Source: (.+?),.+?Vol. (\d{1,2})', journalinfo[[journalinfo.index(x) for x in journalinfo if 'Source: ' in x][0]])
+    values_one = re.search(r'Source: (.+?),.+?Vol. (\d{1,2})',
+                           journalinfo[[journalinfo.index(x)
+                                        for x in journalinfo
+                                        if 'Source: ' in x][0]])
     journaltitle = values_one.group(1)
     if journaltitle == "Linguistic Inquiry":
         shortjournaltitle = "LI"
     elif journaltitle == "Natural Language & Linguistic Theory":
-        journaltitle = "Natural Language \& Linguistic Theory"
+        journaltitle = r"Natural Language \& Linguistic Theory"
         shortjournaltitle = "NLLT"
     elif journaltitle == "Language":
         shortjournaltitle = "Lg"
     else:
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
-    author_field_index = [journalinfo.index(x) for x in journalinfo if 'Author(s): ' in x][0]
-    title = journalinfo[author_field_index-1].strip(' \$')
+    author_field_index = [journalinfo.index(x)
+                          for x in journalinfo if 'Author(s): ' in x][0]
+    title = journalinfo[author_field_index-1].strip(r' \$')
     author = journalinfo[author_field_index].strip('Author(s):').strip()
     # identify items containing "Source: ..." and "Publisher: ..."
-    journalinfo = ' '.join(journalinfo[get_index('Source: ', journalinfo):get_index('Published', journalinfo)])
-    values_two = re.search('No. (\d{1}).+?(\d{4}).+?pp.+?(\d{1,4})-(\d{1,4})', journalinfo)
+    journalinfo = ' '.join(journalinfo[get_index('Source: ', journalinfo):
+                                       get_index('Published', journalinfo)])
+    values_two = re.search(r'No. (\d{1}).+?(\d{4}).+?pp.+?(\d{1,4})-(\d{1,4})',
+                           journalinfo)
     if isinstance(values_two, re.Match):
         number = values_two.group(1)
         year = values_two.group(2)
@@ -151,7 +238,8 @@ if 'Annu. Rev. Linguist' in subject:
     journaltitle = "Annual Review of Linguistics"
     shortjournaltitle = "Annu Rev Linguist"
     journalinfo = extract_text(filename, maxpages=1).split('\n')[:55]
-    values = re.search('Annu. Rev. Linguist. (\d{4}).(\d{1}):(.+?)-(.*)', subject)
+    values = re.search(r'Annu. Rev. Linguist. (\d{4}).(\d{1}):(.+?)-(.*)',
+                       subject)
     year = values.group(1)
     volume = values.group(2)
     number = ""
@@ -164,12 +252,14 @@ if 'BEHAVIORAL AND BRAIN' in subject:
     journaltitle = "Behavioral and Brain Sciences"
     shortjournaltitle = "Behav. Brain Sci."
     if 'Page' in journalinfo[0]:
-        values = re.search('BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\), Page (\d{1}) of (\d{1,3})', journalinfo[0])
+        values = re.search(r'BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\), ' +
+                           r'Page (\d{1}) of (\d{1,3})', journalinfo[0])
         page_start = values.group(2)
         page_end = values.group(3)
-        eid = re.search('doi:.+?e(\d{1,3})', journalinfo[1]).group(1)
+        eid = re.search(r'doi:.+?e(\d{1,3})', journalinfo[1]).group(1)
     else:
-        values = re.search('BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\) (\d{1,2}), (\d{1,3}) –(\d{1,3})', journalinfo[0])
+        values = re.search(r'BEHAVIORAL AND BRAIN SCIENCES \((\d{4})\) ' +
+                           r'(\d{1,2}), (\d{1,3}) –(\d{1,3})', journalinfo[0])
         page_start = values.group(3)
         page_end = values.group(4)
         eid = ""
@@ -185,9 +275,11 @@ if 'BEHAVIORAL AND BRAIN' in subject:
     # where n is the final original empty string before the field containing
     # the string 'Abstract:'.
     tag_empty_items(journalinfo)
-    title = ' '.join(journalinfo[journalinfo.index('1')+1:journalinfo.index('2')])
+    title = ' '.join(journalinfo[journalinfo.index('1')+1:
+                     journalinfo.index('2')])
     authors = []
-    author_end = int(journalinfo[[journalinfo.index(x) for x in journalinfo if 'Abstract:' in x][0]-1])
+    author_end = int(journalinfo[[journalinfo.index(x) for x in journalinfo
+                                  if 'Abstract:' in x][0]-1])
     for n in range(2, author_end):
         authors.append(journalinfo[journalinfo.index(str(n))+1])
 
@@ -195,7 +287,8 @@ if 'Cognition' in subject:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
     journaltitle = "Cognition"
     shortjournaltitle = "Cognition"
-    values = re.search('Cognition, (\d{1,3}) \((\d{4})\) (\d{1,6})', doc.info[0]['Subject'].decode('UTF-8'))
+    values = re.search(r'Cognition, (\d{1,3}) \((\d{4})\) (\d{1,6})',
+                       doc.info[0]['Subject'].decode('UTF-8'))
     volume = values.group(1)
     number = ""
     year = values.group(2)
@@ -207,15 +300,20 @@ if 'Cognition' in subject:
     title = journalinfo[journalinfo.index('4')+1]
     author_start = int(journalinfo.index('5')-1)
     author_end = int(journalinfo.index('6')-1)
-    try: author
-    except NameError: author = re.sub('(\*)|(\d)|( [a-z],)', '', journalinfo[author_start] + journalinfo[author_end])
+    try:
+        author
+    except NameError:
+        author = re.sub(r'(\*)|(\d)|( [a-z],)', '',
+                        journalinfo[author_start] + journalinfo[author_end])
     authors = author.split(', ')
 
 if 'Cognitive Psychology' in subject:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
     journaltitle = "Cognitive Psychology"
     shortjournaltitle = "Cognitive Psychology"
-    values = re.search('Cognitive Psychology (\d{1,3}) \((\d{4})\) (\d{1,3})–(\d{1,3})', journalinfo[0])
+    values = re.search(r'Cognitive Psychology (\d{1,3}) \((\d{4})\) ' +
+                       r'(\d{1,3})–(\d{1,3})',
+                       journalinfo[0])
     volume = values.group(1)
     number = ""
     year = values.group(2)
@@ -224,17 +322,24 @@ if 'Cognitive Psychology' in subject:
     eid = ""
     doi = get_doi_from_text(journalinfo)
     tag_empty_items(journalinfo)
-    title = ' '.join(journalinfo[journalinfo.index('4')+1:journalinfo.index('5')])
-    author = ' '.join(journalinfo[journalinfo.index('5')+1:journalinfo.index('6')])
-    try: author
-    except NameError: author = re.sub('(\*)|(\d)|( [a-z],)', '', journalinfo[author_start] + journalinfo[author_end])
+    title = ' '.join(journalinfo[journalinfo.index('4')+1:
+                                 journalinfo.index('5')])
+    author = ' '.join(journalinfo[journalinfo.index('5')+1:
+                                  journalinfo.index('6')])
+    try:
+        author
+    except NameError:
+        author = re.sub(r'(\*)|(\d)|( [a-z],)', '',
+                        journalinfo[author_start] + journalinfo[author_end])
     authors = author.split(', ')
 
 if 'Cognitive Science' in subject:
     journalinfo = extract_text(filename, maxpages=1).split('\n')
     journaltitle = "Cognitive Science"
     shortjournaltitle = "Cognitive Science"
-    values = re.search('Cognitive Science (\d{1,4}).(\d{1,2}):(\d{1,4})-(\d{1,4})', doc.info[0]['Subject'].decode('UTF-8'))
+    values = re.search(r'Cognitive Science (\d{1,4}).(\d{1,2}):' +
+                       r'(\d{1,4})-(\d{1,4})',
+                       doc.info[0]['Subject'].decode('UTF-8'))
     year = values.group(1)
     volume = values.group(2)
     number = ""
@@ -247,7 +352,7 @@ if 'Cognitive Science' in subject:
         doi = get_doi_from_text(journalinfo)
     tag_empty_items(journalinfo)
     author = journalinfo[journalinfo.index('2')+1]
-    author = re.sub(',\w', ',', author)
+    author = re.sub(r',\w', ',', author)
     author = re.sub('u¨', 'ü', author)
     author = re.sub('o¨', 'ö', author)
     authors = author.split(', ')
@@ -255,16 +360,20 @@ if 'Cognitive Science' in subject:
 if 'Comparative Germanic Linguistics' in subject:
     journaltitle = "The Journal of Comparative Germanic Linguistics"
     shortjournaltitle = "JCGL"
-    values = re.search('Journal of Comparative Germanic Linguistics (\d{1,3}): (\d{1,4})–(\d{1,4}), (\d{4})', subject)
+    values = re.search('Journal of Comparative Germanic Linguistics ' +
+                       r'(\d{1,3}): (\d{1,4})–(\d{1,4}), (\d{4})',
+                       subject)
     volume = values.group(1)
     number = ""
     year = values.group(4)
     page_start = values.group(2)
     page_end = values.group(3)
-    if values == None:
+    if values is None:
         journalinfo = extract_text(filename, maxpages=1).split('\n')
         subject = [line for line in journalinfo if 'Comp German' in line][0]
-        values = re.search('J Comp German Linguistics \((\d{4})\) (\d{1,3}):(\d{1,4})–(\d{1,4})', subject)
+        values = re.search('J Comp German Linguistics ' +
+                           r'\((\d{4})\) (\d{1,3}):(\d{1,4})–(\d{1,4})',
+                           subject)
         volume = values.group(2)
         number = ""
         year = values.group(1)
@@ -274,7 +383,7 @@ if 'Comparative Germanic Linguistics' in subject:
     doi = get_doi_from_text(journalinfo)
     try:
         if author == "":
-            author = re.sub('\d', '', journalinfo[11])
+            author = re.sub(r'\d', '', journalinfo[11])
         else:
             author = re.sub('ˇc', 'č', journalinfo[7])
             author = re.sub('1$', '', author)
@@ -286,8 +395,11 @@ if 'J. Linguistics' in subject or 'Journal of Linguistics' in subject:
     journaltitle = "Journal of Linguistics"
     shortjournaltitle = "JoL"
     journalinfo = extract_text(filename, maxpages=1).split('\n')
-    subject = [line for line in journalinfo if any(journal in line for journal in journals)][0]
-    values = re.search('J. Linguistics (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
+    subject = [line for line in journalinfo
+               if any(journal in line for journal in journals)][0]
+    values = re.search('J. Linguistics ' +
+                       r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+                       subject)
     volume = values.group(1)
     number = ""
     year = values.group(2)
@@ -297,34 +409,40 @@ if 'J. Linguistics' in subject or 'Journal of Linguistics' in subject:
     # title starts after a newline
     title_start = journalinfo[journalinfo.index('')+1]
     # title ends before the first author's name in upper case
-    title_end = journalinfo[[journalinfo.index(author) for author in journalinfo[:15] if author.isupper()][0]-1]
+    title_end = journalinfo[[journalinfo.index(author)
+                             for author in journalinfo[:15]
+                             if author.isupper()][0]-1]
     if title_start != title_end:
-        title = re.sub('\d$', '', title_start + ' ' + title_end)
+        title = re.sub(r'\d$', '', title_start + ' ' + title_end)
     else:
-        title = re.sub('\d$', '', title_start)
-    authors = [re.sub(' ', '', author).title() for author in journalinfo[:15] if author.isupper()]
+        title = re.sub(r'\d$', '', title_start)
+    authors = [re.sub(' ', '', author).title() for author in journalinfo[:15]
+               if author.isupper()]
     eid = ""
 
 if 'Journal ofGermanic Linguistics' in subject:
     journaltitle = "Journal of Germanic Linguistics"
     shortjournaltitle = "Journal of Germanic Linguistics"
-    values = re.search('Journal ofGermanic Linguistics (\d{1,3}).(\d{1}) \((\d{4})\):(\d{1,4})-(\d{1,4})', subject)
+    values = re.search('Journal ofGermanic Linguistics ' +
+                       r'(\d{1,3}).(\d{1}) \((\d{4})\):(\d{1,4})-(\d{1,4})',
+                       subject)
     volume = values.group(1)
     number = values.group(2)
     year = values.group(3)
     page_start = values.group(4)
     page_end = values.group(5)
     eid = ""
-    doi = "" #get_doi_from_text(journalinfo)
+    doi = ""    # get_doi_from_text(journalinfo)
     title = journalinfo[journalinfo.index('')+1].strip(' ')
     authors = author.split(' and ')
 
 if 'Glossa' in subject:
-    #author = HumanName(doc.info[0]['Author'].decode('ISO-8859-1'))
     journaltitle = "Glossa: a journal of general linguistics"
     shortjournaltitle = "Glossa"
-    year = re.search('\d{4}', subject).group(0)
-    glossa = re.search('([A-Za-z].*) (\d)\((\d{1,2})\): (\d{1,2}).+?(\d)-(\d{1,2}).+?(\d.*)', subject)
+    year = re.search(r'\d{4}', subject).group(0)
+    glossa = re.search(r'([A-Za-z].*) (\d)\((\d{1,2})\): ' +
+                       r'(\d{1,2}).+?(\d)-(\d{1,2}).+?(\d.*)',
+                       subject)
     volume = glossa.group(2)
     number = glossa.group(3)
     eid = glossa.group(4)
@@ -341,10 +459,10 @@ if 'TO CITE THIS ARTICLE' in subject:
     # Lau, Elaine and Nozomi Tanaka. 2021. The subject advantage in relative
     # clauses: A review. Glossa: a journal of general linguistics 6(1): 34.
     # 1–34. DOI:
-    glossa = re.search('([A-Za-z].*). (\d{4}). (.+?). ' +
+    glossa = re.search(r'([A-Za-z].*). (\d{4}). (.+?). ' +
                        'Glossa: a journal of general linguistics ' +
-                       '(\d{1,2})\((\d{1})\): (\d{1,3}). (\d{1})–(\d{1,3}). ' +
-                       'DOI: https://doi.org/(.*)', journalinfo)
+                       r'(\d{1,2})\((\d{1})\): (\d{1,3}). (\d{1})–(\d{1,3}).' +
+                       ' DOI: https://doi.org/(.*)', journalinfo)
     author = glossa.group(1)
     year = glossa.group(2)
     title = glossa.group(3)
@@ -357,11 +475,13 @@ if 'TO CITE THIS ARTICLE' in subject:
 if "Journal of Language Modelling" in subject:
     journaltitle = "Journal of Language Modelling"
     shortjournaltitle = "Journal of Language Modelling"
-    values = re.search('Journal of Language Modelling Vol (\d{1,2}), No (\d{1}) \((\d{4})\), pp. (\d{1,3})–(\d{1,3})', subject)
+    values = re.search(r'Journal of Language Modelling Vol (\d{1,2}), ' +
+                       r'No (\d{1}) \((\d{4})\), pp. (\d{1,3})–(\d{1,3})',
+                       subject)
     volume, number, year = values.group(1), values.group(2), values.group(3)
     page_start, page_end = values.group(4), values.group(5)
     title = ' '.join(journalinfo[:journalinfo.index('')])
-    author = re.sub('\d', '', journalinfo[journalinfo.index('')+1])
+    author = re.sub(r'\d', '', journalinfo[journalinfo.index('')+1])
     authors = author.split(' and ')
     doi = ""
     eid = ""
@@ -370,10 +490,12 @@ if "Language, Volume" in subject:
     journaltitle = "Language"
     shortjournaltitle = "Lg"
     lg_info = journalinfo[:10]
-    values = re.search('.+? Volume (\d{1,3}), Number (\d{1}), .+? (\d{4}), pp. (e|)(\d{1,4})-(e|)(\d{1,4})',
-            subject)
+    values = re.search(r'.+? Volume (\d{1,3}), Number (\d{1}), ' +
+                       r'.+? (\d{4}), pp. (e|)(\d{1,4})-(e|)(\d{1,4})',
+                       subject)
     volume, number, year = values.group(1), values.group(2), values.group(3)
-    page_start, page_end = values.group(4)+values.group(5), values.group(6)+values.group(7)
+    page_start = values.group(4)+values.group(5)
+    page_end = values.group(6)+values.group(7)
     doi = get_doi_from_text(lg_info)
     eid = ""
     if 'þÿ' in title:
@@ -393,9 +515,11 @@ if "Language and Linguistics Compass" in subject:
     shortjournaltitle = "Lang Linguist Compass"
     llc = extract_text(filename, maxpages=1).split('\n')
     if 'wileyonlinelibrary.com/journal/lnc3' in llc:
-        llc_info = llc[[llc.index(x) for x in llc if 'Lang Linguist' in x or 'Lang. Linguist.' in x][0]]
+        llc_info = llc[[llc.index(x) for x in llc if 'Lang Linguist' in x
+                        or 'Lang. Linguist.' in x][0]]
         # llc_info: 'Lang. Linguist. Compass. year; vol: pfirst-plast
-        values = re.search('.+? (\d{4}); (\d{1,3}): (\d{1,4})–(\d{1,4})', llc_info)
+        values = re.search(r'.+? (\d{4}); (\d{1,3}): (\d{1,4})–(\d{1,4})',
+                           llc_info)
         year = values.group(1)
         volume = values.group(2)
         number = ""
@@ -405,8 +529,11 @@ if "Language and Linguistics Compass" in subject:
         llc_info = llc[:[llc.index(x) for x in llc if 'Abstract' in x][0]]
         # llc_info: ['journaltitle volume/number (year): pfirst-plast, doi',
         # '', 'title', '', 'author(s)', ...]
-        author = re.sub('(\*)|(\d)', '', llc_info[[llc_info.index(x) for x in llc_info if '*' in x][0]])
-        values = re.search('.+? (\d{1,2})/(\d{1}).+?\((\d{4})\): (\d{1,4})–(\d{1,4}), (.*)', llc_info[0])
+        author = re.sub(r'(\*)|(\d)', '',
+                        llc_info[[llc_info.index(x) for x in llc_info
+                                  if '*' in x][0]])
+        values = re.search(r'.+? (\d{1,2})/(\d{1}).+?\((\d{4})\): ' +
+                           r'(\d{1,4})–(\d{1,4}), (.*)', llc_info[0])
         year = values.group(3)
         volume, number = values.group(1), values.group(2)
         page_start, page_end = values.group(4), values.group(5)
@@ -422,8 +549,12 @@ if "Language and Linguistics Compass" in subject:
 if 'Lingua' in subject:
     journaltitle = "Lingua"
     shortjournaltitle = "Lingua"
-    #values = re.search('Lingua (\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})', journalinfo[0])
-    values = re.search('Lingua(|,) (\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})', subject)
+    # values = re.search('Lingua ' +
+    #                   r'(\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})',
+    #                   journalinfo[0])
+    values = re.search(r'Lingua(|,) ' +
+                       r'(\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})',
+                       subject)
     volume = values.group(2)
     number = ""
     year = values.group(3)
@@ -432,7 +563,7 @@ if 'Lingua' in subject:
     doi = re.search('(10.+?)( |$|,)', subject).group(0)
     eid = ""
     title = doc.info[0]['Title'].decode('UTF-8')
-    #author = re.sub('(\*)|(\d)', '', journalinfo[6])
+    # author = re.sub('(\*)|(\d)', '', journalinfo[6])
     author = doc.info[0]['Author'].decode('UTF-8')
     authors = author.split(', ')
 
@@ -442,16 +573,19 @@ if 'Linguistic Inquiry' in subject:
     li_text = extract_text(filename, maxpages=1).split('\n')
     li_info = li_text[0:10] + li_text[-9:-2]
     # Get the item which includes "Linguistic Inquiry"
-    info = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]]
-    values = re.search('.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
+    info = li_info[[li_info.index(x)
+                    for x in li_info if 'Linguistic Inquiry' in x][0]]
+    values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
     volume = values.group(1)
     number = values.group(2)
     year = values.group(3)
     journaltitle = "Linguistic Inquiry"
     shortjournaltitle = "LI"
     # The page numbers are one item further than info
-    pages = li_info[[li_info.index(x) for x in li_info if 'Linguistic Inquiry' in x][0]+1]
-    page_start, page_end = re.search('(\d{1,3})(–|-)(.*)', pages).group(1), re.search('(\d{1,3})(–|-)(.*)', pages).group(3)
+    pages = li_info[[li_info.index(x)
+                     for x in li_info if 'Linguistic Inquiry' in x][0]+1]
+    page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
+    page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
     if 'Remarks' in li_info[0]:
         li_info = li_info[li_info.index('')+1:]
     title = ' '.join(li_info[0:li_info.index('')])
@@ -464,48 +598,54 @@ if "Linguistic Typology 2" in subject:
     journaltitle = "Linguistic Typology"
     shortjournaltitle = "Linguist Typol"
     tag_empty_items(journalinfo)
-    title = ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')])
-    values = re.search('Linguistic Typology (\d{4}); (\d{1,2})\((\d{1})\): (\d{1,4})–(\d{1,4})', subject)
+    title = ' '.join(journalinfo[journalinfo.index('1')+2:
+                                 journalinfo.index('2')])
+    values = re.search(r'Linguistic Typology (\d{4}); ' +
+                       r'(\d{1,2})\((\d{1})\): (\d{1,4})–(\d{1,4})', subject)
     volume, number, year = values.group(2), values.group(3), values.group(1)
     page_start, page_end = values.group(4), values.group(5)
     eid = ""
     doi = get_doi_from_text(journalinfo)
-    author = re.sub('\*', '', journalinfo[journalinfo.index('1')+1])
+    author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
 if title == "Linguistics Vanguard" or "Linguistics Vanguard" in subject:
     journaltitle = "Linguistics Vanguard"
     shortjournaltitle = "Linguistics Vanguard"
-    values = re.search('Linguistics Vanguard (\d{4}); (\d{1,2})\((.+?)\): (.*)', subject)
+    values = re.search('Linguistics Vanguard ' +
+                       r'(\d{4}); (\d{1,2})\((.+?)\): (.*)', subject)
     volume, number, year = values.group(2), values.group(3), values.group(1)
     page_start, page_end = "1", ""
     eid = values.group(4)
     doi = get_doi_from_text(journalinfo)
     tag_empty_items(journalinfo)
-    title = ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')])
-    author = re.sub('\*', '', journalinfo[2])
+    title = ' '.join(journalinfo[journalinfo.index('1')+2:
+                                 journalinfo.index('2')])
+    author = re.sub(r'\*', '', journalinfo[2])
     authors = split_string(author)
 
 if 'Nat Lang Ling' in subject:
     # NLLT
-    journaltitle = "Natural Language \& Linguistic Theory"
+    journaltitle = r"Natural Language \& Linguistic Theory"
     shortjournaltitle = "NLLT"
     if 'doi' in doc.info[0]:
         doi = doc.info[0]['doi'].decode('UTF-8')
     else:
         doi = get_doi_from_text(journalinfo)
     info = extract_text(filename, maxpages=1).split('\n')[:10]
-    nllt = re.search('.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})', info[0])
+    nllt = re.search(r'.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})',
+                     info[0])
     year = nllt.group(1)
     volume = nllt.group(2)
     number = ""
     if title == "":
-        title = info[[info.index(x) for x in info if 'Received' in x][0]-4].strip(' ')
+        title = info[[info.index(x) for x in info
+                      if 'Received' in x][0]-4].strip(' ')
     eid = ""
     page_start = nllt.group(4)
     page_end = nllt.group(6)
     author = info[[info.index(x) for x in info if 'Received' in x][0]-2]
-    author = re.sub('\d', '', author)
+    author = re.sub(r'\d', '', author)
     author = re.sub('¸s', 'ş', author)
     authors = author.split(' · ')
 
@@ -518,7 +658,8 @@ if 'Nat Lang Semantics' in subject:
     else:
         doi = get_doi_from_text(journalinfo)
     info = extract_text(filename, maxpages=1).split('\n')[:10]
-    nllt = re.search('.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})', info[0])
+    nllt = re.search(r'.+?\((\d{4})\) (\d{1,2}):( |)(\d{1,4})(–|\^)(\d{1,4})',
+                     info[0])
     year = nllt.group(1)
     volume = nllt.group(2)
     number = ""
@@ -531,7 +672,7 @@ if 'Nat Lang Semantics' in subject:
     author = info[info.index('')+1:]
     author = author[author.index('')+1:]
     author = author[:author.index('')][0]
-    author = re.sub('\d', '', author)
+    author = re.sub(r'\d', '', author)
     author = re.sub('¸s', 'ş', author)
     author = re.sub('a´', 'á', author)
     authors = author.split(' · ')
@@ -541,16 +682,18 @@ if 'Syntax' in subject:
     journaltitle = "Syntax"
     shortjournaltitle = "Syntax"
     syntax = extract_text(filename, maxpages=1).split('\n')
-    syntax_info = syntax[:[syntax.index(x) for x in syntax if 'Abstract' in x][0]]
-    # syntax_info: ['Name Volume:Number, Month Year, PageFirst–PageLast', '', 'TITLE', 'Author(s)', '']
+    syntax_info = syntax[:[syntax.index(x) for x in syntax
+                           if 'Abstract' in x][0]]
+    # syntax_info: ['Name Volume:Number, Month Year,
+    #               PageFirst–PageLast', '', 'TITLE', 'Author(s)', '']
     author = syntax_info[-2]
     if 'þÿ' in title:
-                title_list = title.split('þÿ')[1].split('\x00')
-                title = ''
-                for char in title_list:
-                    title = title + char
-    values = re.search('.+? (\d{1,2}):(\d{1}).+?(\d{4}), (\d{1,4})–(\d{1,4})',
-            syntax_info[0])
+        title_list = title.split('þÿ')[1].split('\x00')
+        title = ''
+        for char in title_list:
+            title = title + char
+    values = re.search(r'.+? (\d{1,2}):(\d{1}).+?(\d{4}), (\d{1,4})–(\d{1,4})',
+                       syntax_info[0])
     volume, number, year = values.group(1), values.group(2), values.group(3)
     page_start, page_end = values.group(4), values.group(5)
     if 'WPS-ARTICLEDOI' in doc.info[0]:
@@ -564,10 +707,12 @@ if "The Linguistic Review" in subject:
     # TLR
     journaltitle = "The Linguistic Review"
     shortjournaltitle = "TLR"
-    author = journalinfo[journalinfo.index('')+1:journalinfo.index('Abstract')-1]
+    author = journalinfo[journalinfo.index('')+1:
+                         journalinfo.index('Abstract')-1]
     title = ' '.join(journalinfo[:journalinfo.index('')])
-    values = re.search('The Linguistic Review (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
-            journalinfo[-7])
+    values = re.search('The Linguistic Review ' +
+                       r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+                       journalinfo[-7])
     volume, year = values.group(1), values.group(2)
     number = ''
     page_start, page_end = values.group(3), values.group(4)
@@ -587,13 +732,21 @@ if "The Linguistic Review" in subject:
 if "Theoretical Linguistics" in subject:
     journaltitle = "Theoretical Linguistics"
     shortjournaltitle = "Theoretical Linguistics"
-    values = re.search('Theoretical Linguistics (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
-    if values == None:
-        values = re.search('Theoretical Linguistics (\d{1,2}).(\d.+?) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
-        volume, number, year = values.group(1), values.group(2), values.group(3)
+    values = re.search('Theoretical Linguistics ' +
+                       r'(\d{4}); (\d{1,2})\((\d{1}–\d{1})\): ' +
+                       r'(\d{1,4}) – (\d{1,4})',
+                       subject)
+    if values is None:
+        values = re.search('Theoretical Linguistics ' +
+                           r'(\d{1,2}).(\d.+?) \((\d{4})\), ' +
+                           r'(\d{1,4})–(\d{1,4})',
+                           subject)
+        volume, number = values.group(1), values.group(2)
+        year = values.group(3)
         page_start, page_end = values.group(4), values.group(5)
     else:
-        volume, number, year = values.group(2), values.group(3), values.group(1)
+        volume, number = values.group(2), values.group(3)
+        year = values.group(1)
         page_start, page_end = values.group(4), values.group(5)
     eid = ""
     doi = get_doi_from_text(journalinfo)
@@ -601,27 +754,38 @@ if "Theoretical Linguistics" in subject:
     # Post 2007
     if int(year) > 2011:
         title = journalinfo[journalinfo.index(subject)+3]
-        author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+        author = re.sub(r'\*', '', journalinfo[journalinfo.index(subject)+2])
     else:
         # Up to 2011 (at least)
         tag_empty_items(journalinfo)
         title = ' '.join(journalinfo[:get_index('1', journalinfo)])
-        author = ' '.join(journalinfo[get_index('1', journalinfo):get_index('2', journalinfo)])
-        author = re.sub('\*', '', author)
-        author = re.sub('\d', '', author)
+        author = ' '.join(journalinfo[get_index('1', journalinfo):
+                                      get_index('2', journalinfo)])
+        author = re.sub(r'\*', '', author)
+        author = re.sub(r'\d', '', author)
         authors = author.split(' and ')
 
 if "Zeitschrift für Sprachwissenschaft" in subject:
     journaltitle = "Zeitschrift für Sprachwissenschaft"
     shortjournaltitle = "Zeitschrift für Sprachwissenschaft"
-    values = re.search('Zeitschrift für Sprachwissenschaft (\d{4}); (\d{1,2})\((\d{1}–\d{1})\): (\d{1,4}) – (\d{1,4})', subject)
-    if values == None:
-        #values = re.search('Zeitschrift für Sprachwissenschaft (\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})', subject)
-        values = re.search('Zeitschrift für Sprachwissenschaft (\d{1,2}) \((\d{4})\), (\d{1,4})\(cid:2\)(\d{1,4})', subject)
-        volume, number, year = values.group(1), '', values.group(2)
+    values = re.search('Zeitschrift für Sprachwissenschaft ' +
+                       r'(\d{4}); (\d{1,2})\((\d{1}–\d{1})\): ' +
+                       r'(\d{1,4}) – (\d{1,4})',
+                       subject)
+    if values is None:
+        # values = re.search('Zeitschrift für Sprachwissenschaft ' +
+        #                    r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+        #                    subject)
+        values = re.search('Zeitschrift für Sprachwissenschaft ' +
+                           r'(\d{1,2}) \((\d{4})\), ' +
+                           r'(\d{1,4})\(cid:2\)(\d{1,4})',
+                           subject)
+        volume, number = values.group(1), ''
+        year = values.group(2)
         page_start, page_end = values.group(3), values.group(4)
     else:
-        volume, number, year = values.group(2), values.group(3), values.group(1)
+        volume, number = values.group(2), values.group(3)
+        year = values.group(1)
         page_start, page_end = values.group(4), values.group(5)
     eid = ""
     doi = get_doi_from_text(journalinfo)
@@ -629,14 +793,15 @@ if "Zeitschrift für Sprachwissenschaft" in subject:
     # Post 2009
     if int(year) > 2009:
         title = journalinfo[journalinfo.index(subject)+3]
-        author = re.sub('\*', '', journalinfo[journalinfo.index(subject)+2])
+        author = re.sub(r'\*', '', journalinfo[journalinfo.index(subject)+2])
     else:
         # Up to 2009 (at least)
         tag_empty_items(journalinfo)
         title = ' '.join(journalinfo[:get_index('1', journalinfo)])
-        author = ' '.join(journalinfo[get_index('1', journalinfo):get_index('2', journalinfo)])
-        author = re.sub('\*', '', author)
-        author = re.sub('\d', '', author)
+        author = ' '.join(journalinfo[get_index('1', journalinfo):
+                                      get_index('2', journalinfo)])
+        author = re.sub(r'\*', '', author)
+        author = re.sub(r'\d', '', author)
     authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
@@ -651,66 +816,28 @@ if '_' in title:
 citekey = ''
 names_file = ''
 names_full = ''
-def pad(name):
-    """Add a space if name is a non-empty string."""
-    if name != '':
-        return ' ' + name
-    else:
-        return ''
 
-def name_authors(author_list):
-    """Create list of authors separated by ',' and 'and'."""
-    if len(author_list) > 1:
-        citekey = ''
-        names_file = ''
-        names_full = ''
-        for author in author_list:
-            citekey = citekey + HumanName(author).last.title().replace(' ', '')
-        for i in range(len(author_list)-1):
-            names_file = names_file + HumanName(author_list[i]).last.title() + ', '
-            names_full = names_full + HumanName(author_list[i]).last.title() + ', ' + \
-                    HumanName(author_list[i]).first.title() + pad(HumanName(author_list[i]).middle) + ' and '
-        names_file = names_file + HumanName(author_list[-1]).last.title()
-        names_full = names_full + HumanName(author_list[-1]).last.title() + ', ' + \
-                HumanName(author_list[-1]).first.title() + pad(HumanName(author_list[-1]).middle)
-    else:
-        author = HumanName(author_list[0])
-        citekey = author.last.title()
-        names_file = author.last.title()
-        names_full = author.last.title() + ", " + author.first.title() + pad(author.middle)
-
-    return [citekey, names_file, names_full]
-
-def write_bibentry():
-    entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
-            + "    author = {" + name_authors(authors)[2] + "},\n" \
-            + "    title = {" + title + "},\n" \
-            + "    subtitle = {" + subtitle + "},\n" \
-            + "    year = {" + year + "},\n" \
-            + "    journaltitle = {" + journaltitle + "},\n" \
-            + "    shortjournaltitle = {" + shortjournaltitle + "},\n" \
-            + "    volume = {" + volume + "},\n" \
-            + "    number = {" + number + "},\n" \
-            + "    pages = {" + page_start + "--" + page_end + "},\n" \
-            + "    doi = {" + doi + "},\n" \
-            + "    eid = {" + eid + "},\n" \
-            + "}"
-
-    print(entry)
 
 if vars(args)['copy']:
-    print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
-        "in", shortjournaltitle + ".\n")
-    # rename file
-    print("Okay, renaming file to (keeping original):", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
-    subprocess.run(['cp', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
+    print("We're looking at", "“" + title + "”", "by",
+          name_authors(authors)[1], "from", year, "in",
+          shortjournaltitle + ".\n")
+    # Rename file (cp)
+    print("Okay, renaming file to (keeping original):",
+          name_authors(authors)[1] + " (" + year + ")" +
+          " - " + title + ".pdf\n")
+    subprocess.run(['cp', filename, name_authors(authors)[1] +
+                   ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 if vars(args)['rename']:
-    print("We're looking at", "“" + title + "”", "by", name_authors(authors)[1], "from", year,
-        "in", shortjournaltitle + ".\n")
-    # rename file
-    print("Okay, renaming file to:", name_authors(authors)[1] + " (" + year + ")" + " - " + title + ".pdf\n")
-    subprocess.run(['mv', filename, name_authors(authors)[1] + ' (' + year + ')' + ' - ' + title + '.pdf'])
+    print("We're looking at", "“" + title + "”", "by",
+          name_authors(authors)[1], "from", year,
+          "in", shortjournaltitle + ".\n")
+    # Rename file (mv)
+    print("Okay, renaming file to:", name_authors(authors)[1] +
+          " (" + year + ")" + " - " + title + ".pdf\n")
+    subprocess.run(['mv', filename, name_authors(authors)[1] +
+                   ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 if vars(args)['biblatex']:
     # write biblatex entry
