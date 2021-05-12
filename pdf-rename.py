@@ -31,27 +31,6 @@ with open(filename, 'rb') as f:
     parse = PDFParser(f)
     doc = PDFDocument(parse)
 
-# Identify journals.
-
-journals = ['BEHAVIORAL AND BRAIN',
-            'Cognitive Psychology',
-            'J. Linguistics',
-            'Journal of Comparative Germanic Linguistics',
-            'Journal ofGermanic Linguistics',
-            'Journal of Language Modelling',
-            'Language, Volume',
-            'Lingua',
-            'Linguistic Inquiry',
-            'Linguistic Typology',
-            'Linguistics Vanguard',
-            'Nat Lang Ling',
-            'Nat Lang Semantics',
-            'The Linguistic Review',
-            'Theoretical Linguistics',
-            'TO CITE THIS ARTICLE',     # newer Glossa
-            'Zeitschrift für Sprachwissenschaft'
-            ]
-
 
 def get_doi_from_text(text):
     """Extract DOI from text (a list of sentences)."""
@@ -158,6 +137,29 @@ def write_bibentry():
     print(entry)
 
 
+# Identify journals.
+
+journals = ['BEHAVIORAL AND BRAIN',
+            'Cognitive Psychology',
+            'J. Linguistics',
+            'Journal of Comparative Germanic Linguistics',
+            'Journal ofGermanic Linguistics',
+            'Journal of Language Modelling',
+            'Language, Volume',
+            'Lingua',
+            'Linguistic Inquiry',
+            'Linguistic Typology',
+            'Linguistics Vanguard',
+            r'Linguistics \d{1,2}',
+            'Nat Lang Ling',
+            'Nat Lang Semantics',
+            'The Linguistic Review',
+            'Theoretical Linguistics',
+            'TO CITE THIS ARTICLE',     # newer Glossa
+            'Zeitschrift für Sprachwissenschaft'
+            ]
+
+
 # The following two if-statements check for PDF metadata.
 # If they are specified, authors and titles are set based on them.
 
@@ -189,7 +191,8 @@ try:
             subject = 'JSTOR'
         else:
             subject = [line for line in journalinfo
-                       if any(journal in line for journal in journals)][0]
+                       if any(re.search(journal, line)
+                              for journal in journals)][0]
 except IndexError or NameError:
     sys.exit("Sorry, I'm having trouble identifying the journal... Exiting.\n")
 
