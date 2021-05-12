@@ -612,6 +612,25 @@ if "Linguistic Typology 2" in subject:
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
+if re.search(r'Linguistics \d{1,2}', subject):
+    journaltitle = "Linguistics"
+    shortjournaltitle = "Linguistics"
+    values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
+                       r' (\d{1,3})-(\d{1,3})',
+                       subject)
+    volume = values.group(1)
+    number = ""
+    year = values.group(2)
+    page_start = values.group(3)
+    page_end = values.group(4)
+    doi = get_doi_from_text(journalinfo)
+    eid = ""
+    tag_empty_items(journalinfo)
+    title = re.sub(r'\*', '', ' '.join(journalinfo[:journalinfo.index('1')]))
+    author = journalinfo[journalinfo.index('1')+1:
+                         journalinfo.index('2')][0]
+    authors = split_string(author)
+
 if title == "Linguistics Vanguard" or "Linguistics Vanguard" in subject:
     journaltitle = "Linguistics Vanguard"
     shortjournaltitle = "Linguistics Vanguard"
