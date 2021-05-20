@@ -17,6 +17,7 @@ Many papers from the following journals are recognised automatically:
 - Journal of Linguistics
 - Language (with a Project Muse titlepage)
 - Language and Linguistics Compass
+- Language Sciences
 - Lingua (not very old volumes)
 - Linguistic Inquiry
 - Linguistic Typology

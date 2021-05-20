@@ -146,6 +146,8 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Journal ofGermanic Linguistics',
             'Journal of Language Modelling',
             'Language, Volume',
+            'Language Sciences',
+            r'Language & Communication',
             'Lingua',
             'Linguistic Inquiry',
             'Linguistic Typology',
@@ -548,6 +550,27 @@ if "Language and Linguistics Compass" in subject:
         for char in title_list:
             title = title + char
     authors = author.split(' and ')
+
+if 'Language Sciences' in subject or r'Language & Communication' in subject:
+    journaltitle = "Language Sciences"
+    shortjournaltitle = "Lang Sci"
+    # values = re.search('Lingua ' +
+    #                   r'(\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})',
+    #                   journalinfo[0])
+    values = re.search(r'Language (Sciences|& Communication)(|,) ' +
+                       r'(\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})',
+                       subject)
+    volume = values.group(3)
+    number = ""
+    year = values.group(4)
+    page_start = values.group(5)
+    page_end = values.group(7)
+    doi = re.search('(10.+?)( |$|,)', subject).group(0)
+    eid = ""
+    title = doc.info[0]['Title'].decode('UTF-8')
+    # author = re.sub('(\*)|(\d)', '', journalinfo[6])
+    author = doc.info[0]['Author'].decode('UTF-8')
+    authors = author.split(', ')
 
 if 'Lingua' in subject:
     journaltitle = "Lingua"
