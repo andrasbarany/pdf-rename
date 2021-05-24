@@ -343,14 +343,19 @@ if 'Cognitive Science' in subject:
     journaltitle = "Cognitive Science"
     shortjournaltitle = "Cognitive Science"
     values = re.search(r'Cognitive Science (\d{1,4}).(\d{1,2}):' +
-                       r'(\d{1,4})-(\d{1,4})',
+                       r'((\d{1,4}-\d{1,4})|e.*)',
                        doc.info[0]['Subject'].decode('UTF-8'))
     year = values.group(1)
     volume = values.group(2)
     number = ""
-    page_start = values.group(3)
-    page_end = values.group(4)
-    eid = ""
+    if 'e' in values.group(3):
+        eid = values.group(3)
+        page_start = "1"
+        page_end = ""
+    else:
+        page_start = values.group(3)
+        page_end = values.group(4)
+        eid = ""
     if doc.info[0]['WPS-ARTICLEDOI'] != "":
         doi = doc.info[0]['WPS-ARTICLEDOI'].decode('UTF-8')
     else:
@@ -850,6 +855,8 @@ if "Zeitschrift für Sprachwissenschaft" in subject:
     authors = author.split(' and ')
 
 title = re.sub(' \x10', '-', title)
+title = re.sub(' \x00', ' ', title)
+title = re.sub('þÿ', '', title)
 subtitle = ''
 if ': ' in title:
     subtitle = title.split(': ')[1].capitalize()
