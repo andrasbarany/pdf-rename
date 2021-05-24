@@ -144,6 +144,7 @@ journals = ['BEHAVIORAL AND BRAIN',
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
+            'Journal of Memory and Language',
             'Journal of Language Modelling',
             'Language, Volume',
             'Language Sciences',
@@ -495,6 +496,24 @@ if "Journal of Language Modelling" in subject:
     authors = author.split(' and ')
     doi = ""
     eid = ""
+
+if 'Journal of Memory and Language' in subject:
+    journaltitle = "Journal of Memory and Language"
+    shortjournaltitle = "J Mem Lang"
+    values = re.search(r'Journal of Memory and Language(|,) ' +
+                       r'(\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})',
+                       subject)
+    volume = values.group(2)
+    number = ""
+    year = values.group(3)
+    page_start = values.group(4)
+    page_end = values.group(6)
+    doi = re.search('(10.+?)( |$|,)', subject).group(0)
+    eid = ""
+    title = doc.info[0]['Title'].decode('UTF-8')
+    author = doc.info[0]['Author'].decode('UTF-8')
+    authors = author.split(', ')
+
 
 if "Language, Volume" in subject:
     journaltitle = "Language"
