@@ -599,8 +599,8 @@ if 'Linguistic Inquiry' in subject:
     li_text = extract_text(filename, maxpages=1).split('\n')
     li_info = li_text[0:10] + li_text[-9:-2]
     # Get the item which includes "Linguistic Inquiry"
-    info = li_info[[li_info.index(x)
-                    for x in li_info if 'Linguistic Inquiry' in x][0]]
+    info = li_text[[li_text.index(x)
+                    for x in li_text if 'Linguistic Inquiry' in x][0]]
     values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
     volume = values.group(1)
     number = values.group(2)
@@ -608,15 +608,15 @@ if 'Linguistic Inquiry' in subject:
     journaltitle = "Linguistic Inquiry"
     shortjournaltitle = "LI"
     # The page numbers are one item further than info
-    pages = li_info[[li_info.index(x)
-                     for x in li_info if 'Linguistic Inquiry' in x][0]+1]
+    pages = li_text[[li_text.index(x)
+                     for x in li_text if 'Linguistic Inquiry' in x][0]+1]
     page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
     page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
     if 'Remarks' in li_info[0]:
         li_info = li_info[li_info.index('')+1:]
-    title = ' '.join(li_info[0:li_info.index('')])
-    authors = li_info[li_info.index('')+1:]
-    authors = authors[:authors.index('')]
+    li_info = tag_empty_items(li_info)
+    title = ' '.join(li_info[li_info.index('1'):li_info.index('2')])
+    authors = li_info[:li_info.index('1')]
     doi = get_doi_from_text(li_text)
     eid = ""
 
