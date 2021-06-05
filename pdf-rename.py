@@ -183,7 +183,7 @@ try:
             and not isinstance(doc.info[0]['Subject'], PDFObjRef)
             and doc.info[0]['Subject'] != b''
             and 'Downloaded from' not in
-            doc.info[0]['Subject'].decode('UTF-8')):
+            doc.info[0]['Subject'].decode('ISO-8859-1')):
         subject = re.sub(b'\\x85', b'-',
                          doc.info[0]['Subject']).decode('ISO-8859-1')
     else:
@@ -636,13 +636,34 @@ if 'Linguistic Inquiry' in subject:
                      for x in li_text if 'Linguistic Inquiry' in x][0]+1]
     page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
     page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
-    if 'Remarks' in li_info[0]:
-        li_info = li_info[li_info.index('')+1:]
     li_info = tag_empty_items(li_info)
-    title = ' '.join(li_info[li_info.index('1'):li_info.index('2')])
-    authors = li_info[:li_info.index('1')]
+    if 'Remarks' in li_info[0]:
+        li_info = li_info[li_info.index('1')+1:]
+        title = ' '.join(li_info[li_info.index('1'):li_info.index('2')])
+        authors = li_info[:li_info.index('1')]
+    elif 'R E M A R K S' in li_info[0]:
+        title = ' '.join(li_info[li_info.index('2')+1:li_info.index('3')])
+        authors = li_info[li_info.index('3')+1:li_info.index('4')]
     doi = get_doi_from_text(li_text)
     eid = ""
+
+if re.search(r'Linguistic Typology \d{1,2}', subject):
+    journaltitle = "Linguistic Typology"
+    shortjournaltitle = "Linguist Typol"
+    tag_empty_items(journalinfo)
+    title = ' '.join(journalinfo[:journalinfo.index('1')])
+    values = re.search(r'Linguistic Typology (\d{1,2}) \((\d{4})\), ' +
+                       r'(\d{1,4})–(\d{1,4})', subject)
+    volume, number, year = values.group(1), "", values.group(2)
+    page_start, page_end = values.group(3), values.group(4)
+    eid = ""
+    doi = get_doi_from_text(journalinfo)
+    author = re.sub(r'\*', '',
+                    ' '.join(journalinfo[journalinfo.index('1'):
+                                         journalinfo.index('2')]))
+    author = re.sub(r'\d', '', author)
+    authors = author.split(' and ')
+
 
 if "Linguistic Typology 2" in subject:
     journaltitle = "Linguistic Typology"
