@@ -141,6 +141,7 @@ def write_bibentry():
 
 journals = ['BEHAVIORAL AND BRAIN',
             'Cognitive Psychology',
+            'Glossa: a journal of general linguistics', # Glossa post Janeway
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
@@ -450,17 +451,33 @@ if 'Journal ofGermanic Linguistics' in subject:
 if 'Glossa' in subject:
     journaltitle = "Glossa: a journal of general linguistics"
     shortjournaltitle = "Glossa"
-    year = re.search(r'\d{4}', subject).group(0)
-    glossa = re.search(r'([A-Za-z].*) (\d)\((\d{1,2})\): ' +
-                       r'(\d{1,2}).+?(\d)-(\d{1,2}).+?(\d.*)',
-                       subject)
-    volume = glossa.group(2)
-    number = glossa.group(3)
-    eid = glossa.group(4)
-    page_start = glossa.group(5)
-    page_end = glossa.group(6)
-    doi = glossa.group(7)
-    authors = author.split(' and ')
+    if "DOI" in subject: # ugly hack!
+        year = re.search(r'\d{4}', subject).group(0)
+        glossa = re.search(r'([A-Za-z].*) (\d)\((\d{1,2})\): ' +
+                           r'(\d{1,2}).+?(\d)-(\d{1,2}).+?(\d.*)',
+                           subject)
+        volume = glossa.group(2)
+        number = glossa.group(3)
+        eid = glossa.group(4)
+        page_start = glossa.group(5)
+        page_end = glossa.group(6)
+        doi = glossa.group(7)
+        authors = author.split(' and ')
+    else:
+        docinfo = ' '.join(extract_text(filename, maxpages=1).split('\n')[:4])
+        docinfo = docinfo.split('. Glossa: a journal of general linguistics ')
+        docinfo = docinfo[0].split('.') + docinfo[1:]
+        title = docinfo[2].lstrip()
+        year = docinfo[1].lstrip()
+        data = re.search(r'(\d{1,2})\(1\):.+?(\d{1,2}), ' +
+                         r'pp\. (\d{1})–(\d{1,3})', docinfo[3])
+        volume = data.group(1)
+        number = "1"
+        eid = data.group(2)
+        page_start = data.group(3)
+        page_end = data.group(4)
+        doi = get_doi_from_text(docinfo)
+        authors = docinfo[0].split(' & ')
 
 if 'TO CITE THIS ARTICLE' in subject:
     journaltitle = "Glossa: a journal of general linguistics"
