@@ -661,6 +661,9 @@ if 'Linguistic Inquiry' in subject:
     elif 'R E M A R K S' in li_info[0]:
         title = ' '.join(li_info[li_info.index('2')+1:li_info.index('3')])
         authors = li_info[li_info.index('3')+1:li_info.index('4')]
+    else:
+        authors = li_info[li_info.index('1')+1:li_info.index('2')]
+        title = ' '.join(li_info[:li_info.index('1')])
     doi = get_doi_from_text(li_text)
     eid = ""
 
