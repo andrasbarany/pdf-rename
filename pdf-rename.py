@@ -219,7 +219,7 @@ if subject == 'JSTOR':
     author_field_index = [journalinfo.index(x)
                           for x in journalinfo if 'Author(s): ' in x][0]
     title = journalinfo[author_field_index-1].strip(r' \$')
-    author = journalinfo[author_field_index].strip('Author(s):').strip()
+    author = journalinfo[author_field_index].lstrip('Author(s):').lstrip(' ')
     # identify items containing "Source: ..." and "Publisher: ..."
     journalinfo = ' '.join(journalinfo[get_index('Source: ', journalinfo):
                                        get_index('Published', journalinfo)])
