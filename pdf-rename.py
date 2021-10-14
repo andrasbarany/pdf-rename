@@ -141,7 +141,7 @@ def write_bibentry():
 
 journals = ['BEHAVIORAL AND BRAIN',
             'Cognitive Psychology',
-            'Glossa: a journal of general linguistics', # Glossa post Janeway
+            r'Glossa: (| )a (| )journal (| )of (| )general (| )linguistics', # Glossa post Janeway
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'Journal ofGermanic Linguistics',
@@ -465,12 +465,12 @@ if 'Glossa' in subject:
         authors = author.split(' and ')
     else:
         docinfo = ' '.join(extract_text(filename, maxpages=1).split('\n')[:4])
-        docinfo = docinfo.split('. Glossa: a journal of general linguistics ')
+        docinfo = docinfo.split(' general linguistics ')
         docinfo = docinfo[0].split('.') + docinfo[1:]
         title = docinfo[2].lstrip()
         year = docinfo[1].lstrip()
-        data = re.search(r'(\d{1,2})\(1\):.+?(\d{1,2}), ' +
-                         r'pp\. (\d{1})–(\d{1,3})', docinfo[3])
+        data = re.search(r'(\d{1,2})\(1\):.+?(\d{1,3}), ' +
+                         r'pp\. (\d{1})–(\d{1,3})', docinfo[4])
         volume = data.group(1)
         number = "1"
         eid = data.group(2)
