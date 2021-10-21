@@ -136,6 +136,19 @@ def write_bibentry():
             + "}"
     print(entry)
 
+def write_bookentry():
+    entry = "@" + entry_type + "{" + name_authors(authors)[0] + year + ",\n" \
+            + "    " + author_type + " = {" + name_authors(authors)[2] + "},\n" \
+            + "    year = {" + year + "},\n" \
+            + "    title = {" + title + "},\n" \
+            + "    subtitle = {" + subtitle + "},\n" \
+            + "    series = {" + series + "},\n" \
+            + "    number = {" + number + "},\n" \
+            + "    location = {" + location + "},\n" \
+            + "    publisher = {" + publisher + "},\n" \
+            + "    doi = {" + doi + "},\n" \
+            + "}"
+    print(entry)
 
 # Identify journals.
 
@@ -147,6 +160,7 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Journal ofGermanic Linguistics',
             'Journal of Memory and Language',
             'Journal of Language Modelling',
+            'languagesciencepress',
             'Language, Volume',
             'Language Sciences',
             r'Language & Communication',
@@ -154,7 +168,7 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Linguistic Inquiry',
             'Linguistic Typology',
             'Linguistics Vanguard',
-            r'Linguistics \d{1,2}',
+            r'Linguistics \d{1,4}',
             'Nat Lang Ling',
             'Nat Lang Semantics',
             'The Linguistic Review',
@@ -531,6 +545,25 @@ if 'Journal of Memory and Language' in subject:
     author = doc.info[0]['Author'].decode('UTF-8')
     authors = author.split(', ')
 
+if "languagesciencepress" in subject:
+    book_info = extract_text(filename, page_numbers=[3]).split('\n')
+    doi = get_doi_from_text(book_info)
+    entry = ' '.join(book_info[:book_info.index('')])
+    values = re.search('(.+?). (\d{4}). (.+?) \((.+?) (\d{1,3})\)', entry)
+    author = re.sub(' &', ',', values.group(1))
+    if "eds." in author:
+        entry_type = "incollection"
+        author_type = "editor"
+    else:
+        entry_type = "book"
+        author_type = "author"
+    authors = author.split(', ')
+    year = values.group(2)
+    title = values.group(3)
+    series = values.group(4)
+    number = values.group(5)
+    publisher = "Language Science Press"
+    location = "Berlin"
 
 if "Language, Volume" in subject:
     journaltitle = "Language"
@@ -700,24 +733,40 @@ if "Linguistic Typology 2" in subject:
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
-if re.search(r'Linguistics \d{1,2}', subject):
+if re.search(r'Linguistics \d{1,4}', subject):
     journaltitle = "Linguistics"
     shortjournaltitle = "Linguistics"
     values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
-                       r' (\d{1,3})-(\d{1,3})',
-                       subject)
-    volume = values.group(1)
-    number = ""
-    year = values.group(2)
-    page_start = values.group(3)
-    page_end = values.group(4)
-    doi = get_doi_from_text(journalinfo)
-    eid = ""
-    tag_empty_items(journalinfo)
-    title = re.sub(r'\*', '', ' '.join(journalinfo[:journalinfo.index('1')]))
-    author = journalinfo[journalinfo.index('1')+1:
-                         journalinfo.index('2')][0]
-    authors = split_string(author)
+                       r' (\d{1,3})-(\d{1,3})', subject)
+    if values:
+        volume = values.group(1)
+        number = ""
+        year = values.group(2)
+        page_start = values.group(3)
+        page_end = values.group(4)
+        doi = get_doi_from_text(journalinfo)
+        eid = ""
+        tag_empty_items(journalinfo)
+        title = re.sub(r'\*', '', ' '.join(journalinfo[:journalinfo.index('1')]))
+        author = journalinfo[journalinfo.index('1')+1:
+                             journalinfo.index('2')][0]
+        authors = split_string(author)
+    else:
+        values = re.search(r'Linguistics (\d{4}); (\d{1,2})\((\d{1})\):' +
+                           r' (\d{1,4})–(\d{1,4})', subject)
+        volume = values.group(2)
+        number = values.group(3)
+        year = values.group(1)
+        page_start = values.group(4)
+        page_end = values.group(5)
+        doi = get_doi_from_text(journalinfo)
+        eid = ""
+        tag_empty_items(journalinfo)
+        title = re.sub(r'\*', '',
+                ' '.join(journalinfo[journalinfo.index('1')+2:journalinfo.index('2')]))
+        author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1:
+                             journalinfo.index('2')][0])
+        authors = split_string(author)
 
 if title == "Linguistics Vanguard" or "Linguistics Vanguard" in subject:
     journaltitle = "Linguistics Vanguard"
@@ -931,9 +980,14 @@ names_full = ''
 
 
 if vars(args)['copy']:
+    try:
+        shortjournaltitle
+        pub = shortjournaltitle
+    except NameError:
+        pub = publisher
     print("We're looking at", "“" + title + "”", "by",
           name_authors(authors)[1], "from", year, "in",
-          shortjournaltitle + ".\n")
+          pub + ".\n")
     # Rename file (cp)
     print("Okay, renaming file to (keeping original):",
           name_authors(authors)[1] + " (" + year + ")" +
@@ -942,9 +996,14 @@ if vars(args)['copy']:
                    ' (' + year + ')' + ' - ' + title + '.pdf'])
 
 if vars(args)['rename']:
+    try:
+        shortjournaltitle
+        pub = shortjournaltitle
+    except NameError:
+        pub = publisher
     print("We're looking at", "“" + title + "”", "by",
           name_authors(authors)[1], "from", year,
-          "in", shortjournaltitle + ".\n")
+          "in", pub + ".\n")
     # Rename file (mv)
     print("Okay, renaming file to:", name_authors(authors)[1] +
           " (" + year + ")" + " - " + title + ".pdf\n")
@@ -953,4 +1012,7 @@ if vars(args)['rename']:
 
 if vars(args)['biblatex']:
     # write biblatex entry
-    write_bibentry()
+    if entry_type == "book" or entry_type == "incollection":
+        write_bookentry()
+    else:
+        write_bibentry()
