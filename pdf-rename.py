@@ -253,6 +253,9 @@ if subject == 'JSTOR':
     doi = get_doi_from_text(journalinfo)
     eid = ""
 
+# set entry_type to article as a default; override later
+entry_type = "article"
+
 if 'Annu. Rev. Linguist' in subject:
     if vars(args)['biblatex']:
         print("Please doublecheck DOI.\n")
