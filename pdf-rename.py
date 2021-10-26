@@ -427,7 +427,7 @@ if 'J. Linguistics' in subject or 'Journal of Linguistics' in subject:
     subject = [line for line in journalinfo
                if any(journal in line for journal in journals)][0]
     values = re.search('J. Linguistics ' +
-                       r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+                       r'(\d{1,2}) \((\d{4})\), (\d{1,4}).(\d{1,4})',
                        subject)
     volume = values.group(1)
     number = ""
@@ -736,7 +736,7 @@ if "Linguistic Typology 2" in subject:
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
-if re.search(r'Linguistics \d{1,4}', subject):
+if re.search(r'Linguistics \d{1,4} ( |;)', subject):
     journaltitle = "Linguistics"
     shortjournaltitle = "Linguistics"
     values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
