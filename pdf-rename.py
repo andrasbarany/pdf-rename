@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # coding=utf8
 import argparse
+import re
+import subprocess
+import sys
 from nameparser import HumanName
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.high_level import extract_text
 from pdfminer.pdftypes import PDFObjRef
-import re
-import subprocess
-import sys
 
 parser = argparse.ArgumentParser(description='Rename PDFs automatically \
                                 to include author(s), year, and title.')
@@ -45,7 +45,7 @@ def get_doi_from_text(text):
         doi = ""
     if doi == "" and vars(args)['biblatex']:
         print("Couldn't get DOI.\n")
-    return(doi)
+    return doi
 
 
 def get_index(string, list):
