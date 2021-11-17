@@ -232,7 +232,10 @@ if subject == 'JSTOR':
     volume = values_one.group(2)
     author_field_index = [journalinfo.index(x)
                           for x in journalinfo if 'Author(s): ' in x or 'Review by: ' in x][0]
-    title = journalinfo[author_field_index-1].strip(r' \$').lstrip('Reviewed Work(s) :')
+    if 'Review: ' in journalinfo[0]:
+        title = journalinfo[author_field_index-2].strip(r' \$').lstrip('Review: ')
+    else:
+        title = journalinfo[author_field_index-1].strip(r' \$')
     author = journalinfo[author_field_index].lstrip('(Author(s):\|Review by:)').lstrip(' ')
     # identify items containing "Source: ..." and "Publisher: ..."
     journalinfo = ' '.join(journalinfo[get_index('Source:', journalinfo):
