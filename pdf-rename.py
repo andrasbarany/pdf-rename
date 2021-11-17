@@ -848,7 +848,7 @@ if 'Syntax' in subject:
                            if 'Abstract' in x][0]]
     # syntax_info: ['Name Volume:Number, Month Year,
     #               PageFirst–PageLast', '', 'TITLE', 'Author(s)', '']
-    author = syntax_info[-2]
+    authors = syntax_info[-2]
     if 'þÿ' in title:
         title_list = title.split('þÿ')[1].split('\x00')
         title = ''
