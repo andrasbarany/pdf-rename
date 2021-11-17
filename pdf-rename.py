@@ -231,12 +231,12 @@ if subject == 'JSTOR':
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
     author_field_index = [journalinfo.index(x)
-                          for x in journalinfo if 'Author(s): ' in x][0]
+                          for x in journalinfo if 'Author(s): ' in x or 'Review by: ' in x][0]
     title = journalinfo[author_field_index-1].strip(r' \$')
-    author = journalinfo[author_field_index].lstrip('Author(s):').lstrip(' ')
+    author = journalinfo[author_field_index].lstrip('(Author(s):\|Review by:)').lstrip(' ')
     # identify items containing "Source: ..." and "Publisher: ..."
-    journalinfo = ' '.join(journalinfo[get_index('Source: ', journalinfo):
-                                       get_index('Published', journalinfo)])
+    journalinfo = ' '.join(journalinfo[get_index('Source:', journalinfo):
+                                       get_index('Source:', journalinfo)+1])
     values_two = re.search(r'No. (\d{1}).+?(\d{4}).+?pp.+?(\d{1,4})-(\d{1,4})',
                            journalinfo)
     if isinstance(values_two, re.Match):
