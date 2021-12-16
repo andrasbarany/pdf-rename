@@ -739,7 +739,7 @@ if "Linguistic Typology 2" in subject:
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
-if re.search(r'Linguistics \d{1,4} ( |;)', subject):
+if re.search(r'Linguistics \d{1,4}( |;)', subject):
     journaltitle = "Linguistics"
     shortjournaltitle = "Linguistics"
     values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
