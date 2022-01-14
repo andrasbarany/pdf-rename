@@ -872,27 +872,39 @@ if "The Linguistic Review" in subject:
     # TLR
     journaltitle = "The Linguistic Review"
     shortjournaltitle = "TLR"
-    author = journalinfo[journalinfo.index('')+1:
-                         journalinfo.index('Abstract')-1]
-    title = ' '.join(journalinfo[:journalinfo.index('')])
-    values = re.search('The Linguistic Review ' +
-                       r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
-                       journalinfo[-7])
-    volume, year = values.group(1), values.group(2)
-    number = ''
-    page_start, page_end = values.group(3), values.group(4)
+    if 'The Linguistic Review' in journalinfo[0]:
+        tlr = tag_empty_items(journalinfo)
+        author = re.sub('\*', '', tlr[tlr.index('1')+1])
+        title = tlr[tlr.index('1')+2]
+        values = re.search('The Linguistic Review ' +
+                           r'(\d{4}); (\d{1,3})\((\d{1})\): (\d{1,4})–(\d{1,4})',
+                           tlr[0])
+        volume, year = values.group(2), values.group(1)
+        number = values.group(3)
+        page_start, page_end = values.group(4), values.group(5)
+    else:
+        author = journalinfo[journalinfo.index('')+1:
+                             journalinfo.index('Abstract')-1]
+        title = ' '.join(journalinfo[:journalinfo.index('')])
+        values = re.search('The Linguistic Review ' +
+                           r'(\d{1,2}) \((\d{4})\), (\d{1,4})–(\d{1,4})',
+                           journalinfo[-7])
+        volume, year = values.group(1), values.group(2)
+        number = ''
+        page_start, page_end = values.group(3), values.group(4)
+        if len(author) > 1:
+            authors = author[0].split(', ') + [author[1]]
+            authors = [re.sub(' AND', '', auth) for auth in authors]
+            authors = [re.sub(' and', '', auth) for auth in authors]
+        elif type(author) == list:
+            authors = author[0].split(' AND ')
+            authors = author[0].split(' and ')
+        else:
+            authors = author.split(' AND ')
+            authors = author.split(' and ')
     doi = get_doi_from_text(journalinfo)
     eid = ""
-    if len(author) > 1:
-        authors = author[0].split(', ') + [author[1]]
-        authors = [re.sub(' AND', '', auth) for auth in authors]
-        authors = [re.sub(' and', '', auth) for auth in authors]
-    elif type(author) == list:
-        authors = author[0].split(' AND ')
-        authors = author[0].split(' and ')
-    else:
-        authors = author.split(' AND ')
-        authors = author.split(' and ')
+    authors = author.split(' and ')
 
 if "Theoretical Linguistics" in subject:
     journaltitle = "Theoretical Linguistics"
