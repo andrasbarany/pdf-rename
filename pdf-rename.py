@@ -119,6 +119,7 @@ def tag_empty_items(list):
             i = i+1
     return(list)
 
+
 def write_bibentry():
     entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
             + "    author = {" + name_authors(authors)[2] + "},\n" \
@@ -135,6 +136,7 @@ def write_bibentry():
             + "}"
     print(entry)
 
+
 def write_bookentry():
     entry = "@" + entry_type + "{" + name_authors(authors)[0] + year + ",\n" \
             + "    " + author_type + " = {" + name_authors(authors)[2] + "},\n" \
@@ -149,13 +151,14 @@ def write_bookentry():
             + "}"
     print(entry)
 
-# Identify journals.
 
+# Identify journals.
 journals = ['BEHAVIORAL AND BRAIN',
             'Revue canadienne de linguistique',
             'Cognitive Psychology',
             'Frontiers in Psychology',
-            r'Glossa: (| )a (| )journal (| )of (| )general (| )linguistics', # Glossa post Janeway
+            # Glossa post Janeway
+            r'Glossa: (| )a (| )journal (| )of (| )general (| )linguistics',
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'J Comp German Linguistics',
@@ -241,7 +244,8 @@ if subject == 'JSTOR':
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
     author_field_index = [journalinfo.index(x)
-                          for x in journalinfo if 'Author(s): ' in x or 'Review by: ' in x][0]
+                          for x in journalinfo if 'Author(s): ' in x or
+                          'Review by: ' in x][0]
     if 'Review: ' in journalinfo[0]:
         title = journalinfo[author_field_index-2].strip(r' \$').lstrip('Review: ')
     else:
@@ -991,6 +995,7 @@ if "Linguistic Review" in subject:
                            r'(\d{4}); (\d{1,3})\((\d{1})\): ' +
                            r'(\d{1,4})–(\d{1,4})',
                            tlr[0])
+        print(values)
         if values == None:
             data = [item for item in tlr if item.isupper()]
             title = re.sub('\*', '', data[0].lower().capitalize())
