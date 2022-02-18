@@ -78,7 +78,7 @@ def name_authors(author_list):
             pad(HumanName(author_list[-1]).middle)
     else:
         author = HumanName(author_list[0])
-        citekey = author.last.title()
+        citekey = author.last.title().replace(' ', '')
         names_file = author.last.title()
         names_full = author.last.title() + ", " + \
             author.first.title() + pad(author.middle)
@@ -135,18 +135,45 @@ def write_bibentry():
             + "}"
     print(entry)
 
+
 def write_bookentry():
     entry = "@" + entry_type + "{" + name_authors(authors)[0] + year + ",\n" \
             + "    " + author_type + " = {" + name_authors(authors)[2] + "},\n" \
             + "    year = {" + year + "},\n" \
             + "    title = {" + title + "},\n" \
             + "    subtitle = {" + subtitle + "},\n" \
+            + "    editor = {" + name_authors(editors)[2] + "},\n" \
+            + "    booktitle = {" + booktitle + "},\n" \
+            + "    booksubtitle = {" + booksubtitle + "},\n" \
             + "    series = {" + series + "},\n" \
             + "    number = {" + number + "},\n" \
             + "    location = {" + location + "},\n" \
             + "    publisher = {" + publisher + "},\n" \
             + "    doi = {" + doi + "},\n" \
             + "}"
+    print(entry)
+
+
+def write_incollentry():
+    entry = "@" + entry_type + "{" + name_authors(authors)[0] + year + ",\n" \
+            + "    author = {" + name_authors(authors)[2] + "},\n" \
+            + "    year = {" + year + "},\n" \
+            + "    title = {" + title + "},\n" \
+            + "    subtitle = {" + subtitle + "},\n" \
+            + "    pages = {" + page_start + "--" + page_end + "},\n" \
+            + "    doi = {" + doi + "},\n" \
+            + "    crossref = {" + name_authors(editors)[0] + year + "},\n" \
+            + "}\n" \
+            + "\n" \
+            + "@collection{" + name_authors(editors)[0] + year + ",\n" \
+            + "    editor = {" + name_authors(editors)[2] + "},\n" \
+            + "    year = {" + year + "},\n" \
+            + "    booktitle = {" + booktitle + "},\n" \
+            + "    booksubtitle = {" + booksubtitle + "},\n" \
+            + "    publisher = {" + publisher + "},\n" \
+            + "    location = {" + location + "},\n" \
+            + "    doi = {},\n" \
+            + "}\n"
     print(entry)
 
 # Identify journals.
@@ -163,6 +190,8 @@ journals = ['BEHAVIORAL AND BRAIN',
             'Journal of Memory and Language',
             'Journal of Language Modelling',
             'languagesciencepress',
+            'Language Science Press',
+            'Berlin: Language',
             'Language, Volume',
             r'Lang Resources & Evaluation'
             r'Language Sciences \d{1,2}',
@@ -616,7 +645,7 @@ if "languagesciencepress" in subject:
     values = re.search('(.+?). (\d{4}). (.+?) \((.+?) (\d{1,3})\)', entry)
     author = re.sub(' &', ',', values.group(1))
     if "eds." in author:
-        entry_type = "incollection"
+        entry_type = "collection"
         author_type = "editor"
     else:
         entry_type = "book"
@@ -628,6 +657,36 @@ if "languagesciencepress" in subject:
     number = values.group(5)
     publisher = "Language Science Press"
     location = "Berlin"
+
+if "Language Science Press" in subject or "Berlin: Language" in subject:
+    publisher = "Language Science Press"
+    location = "Berlin"
+    chapter = extract_text(filename, maxpages=1).split('\n')
+    doi = get_doi_from_text(chapter)
+    chapter.reverse()
+    tag_empty_items(chapter)
+    chapter.reverse()
+    entry = re.sub('- ', '',
+                   ' '.join(chapter[chapter.index('2')+1:chapter.index('1')]))
+    values = re.search(r'(.+?)\. (\d{4})\. (.+?)\. In (.+?) \(ed.+?, ' +
+                       r'(.+?), (.+?)–(.+?)\.', entry)
+    try:
+        author = values.group(1)
+        authors = author.split(', ')
+        year = values.group(2)
+        title = values.group(3)
+        editors = re.sub(' & ', ', ', values.group(4)).split(', ')
+        booktitle = values.group(5)
+        page_start = values.group(6)
+        page_end = values.group(7)
+    except AttributeError:
+        sys.exit("Sorry, I'm having trouble identifying metadata other than " +
+                 "“" + publisher + "”" +
+                 "... Exiting.\n")
+    entry_type = "incollection"
+    author_type = "author"
+    series = ""
+    number = ""
 
 if "Language, Volume" in subject:
     journaltitle = "Language"
@@ -937,21 +996,52 @@ if 'PNAS' in subject:
     shortjournaltitle = 'PNAS'
     pattern = r'PNAS \d{4}'
     journalinfo = journalinfo[[journalinfo.index(x) for x in journalinfo if len(x) > 1][0]:]
-    pnas_info = journalinfo[[journalinfo.index(x) for x in journalinfo
+    try:
+        pnas_info = journalinfo[[journalinfo.index(x) for x in journalinfo
                              if re.search(pattern, x)][0]]
-    values = re.search(r'PNAS (\d{4}) Vol. (\d{1,3}) No. (\d{1,3}) e(.*)',
-                       pnas_info)
-    year, volume, number = values.group(1), values.group(2), values.group(3)
-    eid = values.group(4)
-    doi = get_doi_from_text(journalinfo).rstrip('/-/DC_Supplemental.')
-    pattern = r'(\d{1,3}) of (\d{1,3})'
-    pages = journalinfo[[journalinfo.index(x) for x in journalinfo
-                                     if re.search(pattern, x)][0]]
-    page_start = re.search(pattern, pages).group(1)
-    page_end = re.search(pattern, pages).group(2)
-    journalinfo = tag_empty_items(journalinfo)
-    authors = re.sub(r'\ue840', '', journalinfo[journalinfo.index('1')+1])
-    authors = re.sub(r',\d', '', authors).split('and')
+        values = re.search(r'PNAS (\d{4}) Vol. (\d{1,3}) No. (\d{1,3}) e(.*)',
+                           pnas_info)
+        year, volume, number = values.group(1), values.group(2), values.group(3)
+        eid = values.group(4)
+        doi = get_doi_from_text(journalinfo).rstrip('/-/DC_Supplemental.')
+        pattern = r'(\d{1,3}) of (\d{1,3})'
+        pages = journalinfo[[journalinfo.index(x) for x in journalinfo
+                             if re.search(pattern, x)][0]]
+        page_start = re.search(pattern, pages).group(1)
+        page_end = re.search(pattern, pages).group(2)
+        journalinfo = tag_empty_items(journalinfo)
+        authors = re.sub(r'\ue840', '', journalinfo[journalinfo.index('1')+1])
+        authors = re.sub(r',\d', '', authors).split('and')
+    except IndexError:
+        tag_empty_items(journalinfo)
+        title = ' '.join(journalinfo[0:journalinfo.index('1')])
+        title = re.sub('ﬁ', 'fi', title)
+        title = re.sub('ﬂ', 'fl', title)
+        authors = ' '.join(journalinfo[journalinfo.index('1') + 1:
+                                       journalinfo.index('2')])
+        authors = re.sub(', and', ', ', authors)
+        authors = re.sub(r',[a-z],', '', authors)
+        authors = re.sub(r',\d', '', authors)
+        print(authors)
+        authors = re.sub(r'ˇ(\w)', '\\1̌', authors)
+        authors = re.sub(r'´(\w)', '\\1́', authors)
+        authors = authors.split(', ')
+        info = re.compile(r'.+?(\d{4}) \|')
+        info = list(filter(info.match, journalinfo))[0]
+        values = re.search(r'.+?(\d{4}) \| ' +
+                           r'vol. (\d{1,4}) \| ' +
+                           r'no. (\d{1,3}) \| ' +
+                           r'(\d{1,6})–(\d{1,6})',
+                           info)
+        year = values.group(1)
+        volume = values.group(2)
+        number = values.group(3)
+        page_start = values.group(4)
+        page_end = values.group(5)
+        doi = re.compile(r'.+?org/cgi')
+        doi = list(filter(doi.match, journalinfo))
+        doi = get_doi_from_text(doi)
+    eid = ""
 
 if 'Syntax' in subject:
     # Syntax
@@ -1112,12 +1202,17 @@ title = re.sub(' \x10', '-', title)
 title = re.sub(' \x00', ' ', title)
 title = re.sub('þÿ', '', title)
 subtitle = ''
+booktitle = ''
+booksubtitle = ''
 if ': ' in title:
     subtitle = title.split(': ')[1].capitalize()
     title = title.split(':')[0]
 if '_' in title:
     subtitle = title.split('_ ')[1]
     title = title.split('_')[0]
+if ': ' in booktitle:
+    booksubtitle = booktitle.split(': ')[1].capitalize()
+    booktitle = booktitle.split(':')[0]
 
 citekey = ''
 names_file = ''
@@ -1157,7 +1252,9 @@ if vars(args)['rename']:
 
 if vars(args)['biblatex']:
     # write biblatex entry
-    if entry_type == "book" or entry_type == "incollection":
+    if entry_type == "book" or entry_type == "collection":
         write_bookentry()
+    elif entry_type == "incollection":
+        write_incollentry()
     else:
         write_bibentry()
