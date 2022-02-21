@@ -668,7 +668,7 @@ if "Language Science Press" in subject or "Berlin: Language" in subject:
     chapter.reverse()
     entry = re.sub('- ', '',
                    ' '.join(chapter[chapter.index('2')+1:chapter.index('1')]))
-    values = re.search(r'(.+?)\. (\d{4})\. (.+?)\. In (.+?) \(ed.+?, ' +
+    values = re.search(r'(.+?)\. (\d{4})\. (.+?)\. (.+?) \(ed.+?, ' +
                        r'(.+?), (.+?)–(.+?)\.', entry)
     try:
         author = values.group(1)
