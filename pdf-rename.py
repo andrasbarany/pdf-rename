@@ -34,7 +34,9 @@ with open(filename, 'rb') as f:
 
 def defaults():
     for field in [year, volume, number, pages, eid]:
-        if field == None:
+        try:
+            field
+        except NameError:
             field = ""
 
 
