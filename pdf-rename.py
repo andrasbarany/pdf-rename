@@ -589,7 +589,7 @@ if 'Glossa' in subject:
                          titledata)
         volume = data.group(1)
         number = "1"
-        eid = data.group(2)
+        eid = data.group(3)
         page_start = data.group(4)
         page_end = data.group(5)
         doi = get_doi_from_text(titledata.split('DOI: '))
