@@ -32,6 +32,12 @@ with open(filename, 'rb') as f:
     doc = PDFDocument(parse)
 
 
+def defaults():
+    for field in [year, volume, number, pages, eid]:
+        if field == None:
+            field = ""
+
+
 def get_doi_from_text(text):
     """Extract DOI from text (a list of sentences)."""
     try:
@@ -761,17 +767,27 @@ if 'Linguistic Inquiry' in subject:
     # Get the item which includes "Linguistic Inquiry"
     info = li_text[[li_text.index(x)
                     for x in li_text if 'Linguistic Inquiry' in x][0]]
-    values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
-    volume = values.group(1)
-    number = values.group(2)
-    year = values.group(3)
     journaltitle = "Linguistic Inquiry"
     shortjournaltitle = "LI"
-    # The page numbers are one item further than info
-    pages = li_text[[li_text.index(x)
-                     for x in li_text if 'Linguistic Inquiry' in x][0]+1]
-    page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
-    page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
+    if "Early Access" in info:
+        values = ""
+        pages = li_text[[li_text.index(x)
+                         for x in li_text if '–' in x][0]]
+        page_start = re.search(r'(\d{1,3})–', pages).group(1)
+        page_end = re.search(r'–(\d{1,3})', pages).group(1)
+        year = re.search('(\d{4})', li_text[get_index('Massachusetts', li_text)]).group(0)
+        volume = ""
+        number = ""
+    else:
+        values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
+        volume = values.group(1)
+        number = values.group(2)
+        year = values.group(3)
+        # The page numbers are one item further than info
+        pages = li_text[[li_text.index(x)
+                         for x in li_text if 'Linguistic Inquiry' in x][0]+1]
+        page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
+        page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
     li_info = tag_empty_items(li_info)
     if 'Remarks' in li_info[0]:
         li_info = li_info[li_info.index('1')+1:]
@@ -780,6 +796,9 @@ if 'Linguistic Inquiry' in subject:
     elif 'R E M A R K S' in li_info[0]:
         title = ' '.join(li_info[li_info.index('2')+1:li_info.index('3')])
         authors = li_info[li_info.index('3')+1:li_info.index('4')]
+    elif 'Early Access' in info:
+        authors = li_info[li_info.index('2')+1:li_info.index('3')]
+        title = ' '.join(li_info[li_info.index('1')+1:li_info.index('2')]).lower().capitalize()
     else:
         authors = li_info[li_info.index('1')+1:li_info.index('2')]
         title = ' '.join(li_info[:li_info.index('1')])
