@@ -594,7 +594,12 @@ if 'Glossa' in subject:
         page_end = data.group(5)
         doi = get_doi_from_text(titledata.split('DOI: '))
         author = docinfo[get_index('@', docinfo)-3]
-        authors = author.split(' & ')
+        if "&" in author:
+            authors = author.split(' & ')
+        elif "and" in author:
+            authors = author.split(' and ')
+        else:
+            authors = author
 
 if 'TO CITE THIS ARTICLE' in subject:
     journaltitle = "Glossa: a journal of general linguistics"
