@@ -127,7 +127,6 @@ def tag_empty_items(list):
             i = i+1
     return(list)
 
-
 def write_bibentry():
     entry = "@article{" + name_authors(authors)[0] + year + ",\n" \
             + "    author = {" + name_authors(authors)[2] + "},\n" \
@@ -809,14 +808,15 @@ if 'Lingua' in subject:
     #                   r'(\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})',
     #                   journalinfo[0])
     values = re.search(r'Lingua(|,) ' +
-                       r'(\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})',
+                       r'(\d{1,3}) \((\d{4})\) (\d{1,6})(-|–|)(\d{1,4}|)',
                        subject)
     volume = values.group(2)
     number = ""
     year = values.group(3)
     page_start = values.group(4)
     page_end = values.group(6)
-    doi = re.search('(10.+?)( |$|,)', subject).group(0)
+    lingua = extract_text(filename, maxpages=1).split('\n')
+    doi = get_doi_from_text(lingua)
     eid = ""
     title = doc.info[0]['Title'].decode('UTF-8')
     # author = re.sub('(\*)|(\d)', '', journalinfo[6])
@@ -901,21 +901,22 @@ if re.search(r"Linguistic Typology 2\d{3};", subject):
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
-if 'Theoretical ' not in subject and re.search(r'Linguistics \d{1,4}( |;)', subject):
+if 'Theoretical ' not in subject and re.search(r'Linguistics \d{1,4}( |;|–)', subject):
     journaltitle = "Linguistics"
     shortjournaltitle = "Linguistics"
-    values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
-                       r' (\d{1,3})-(\d{1,3})', subject)
+    values = re.search(r'Linguistics (\d{1,2})(–\d|) \((\d{4})\), ' +
+                       r'(\d{1,3})(-|–)(\d{1,3})', subject)
     if values:
         volume = values.group(1)
-        number = ""
-        year = values.group(2)
-        page_start = values.group(3)
-        page_end = values.group(4)
+        number = values.group(2).replace("–", "")
+        year = values.group(3)
+        page_start = values.group(4)
+        page_end = values.group(6)
         doi = get_doi_from_text(journalinfo)
         eid = ""
         tag_empty_items(journalinfo)
         title = re.sub(r'\*', '', ' '.join(journalinfo[:journalinfo.index('1')]))
+        title = re.sub(r'1', '', ' '.join(journalinfo[:journalinfo.index('1')]))
         author = journalinfo[journalinfo.index('1')+1:
                              journalinfo.index('2')][0]
         authors = split_string(author)
