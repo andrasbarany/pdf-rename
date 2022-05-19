@@ -161,6 +161,7 @@ def write_bookentry():
             + "}"
     print(entry)
 
+
 def write_incollentry():
     entry = "@" + entry_type + "{" + name_authors(authors)[0] + year + ",\n" \
             + "    author = {" + name_authors(authors)[2] + "},\n" \
@@ -1051,7 +1052,6 @@ if 'PNAS' in subject:
         authors = re.sub(', and', ', ', authors)
         authors = re.sub(r',[a-z],', '', authors)
         authors = re.sub(r',\d', '', authors)
-        print(authors)
         authors = re.sub(r'ˇ(\w)', '\\1̌', authors)
         authors = re.sub(r'´(\w)', '\\1́', authors)
         authors = authors.split(', ')
@@ -1184,7 +1184,6 @@ if "Theoretical Linguistics" in subject:
         title = ' '.join(journalinfo[:get_index('1', journalinfo)])
         author = ' '.join(journalinfo[get_index('1', journalinfo):
                                       get_index('2', journalinfo)])
-        print(author)
         author = re.sub(r'\*', '', author)
         author = re.sub(r'\d', '', author)
         authors = author.split(' and ')
