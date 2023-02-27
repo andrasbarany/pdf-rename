@@ -32,6 +32,14 @@ with open(filename, 'rb') as f:
     doc = PDFDocument(parse)
 
 
+def defaults():
+    for field in [year, volume, number, pages, eid]:
+        try:
+            field
+        except NameError:
+            field = ""
+
+
 def get_doi_from_text(text):
     """Extract DOI from text (a list of sentences)."""
     try:
@@ -176,13 +184,14 @@ def write_incollentry():
             + "}\n"
     print(entry)
 
-# Identify journals.
 
+# Identify journals.
 journals = ['BEHAVIORAL AND BRAIN',
             'Revue canadienne de linguistique',
             'Cognitive Psychology',
             'Frontiers in Psychology',
-            r'Glossa: (| )a (| )journal (| )of (| )general (| )linguistics', # Glossa post Janeway
+            # Glossa post Janeway
+            r'Glossa: (| )a (| )journal (| )of (| )general (| )linguistics',
             'J. Linguistics',
             'Journal of Comparative Germanic Linguistics',
             'J Comp German Linguistics',
@@ -270,7 +279,8 @@ if subject == 'JSTOR':
         shortjournaltitle = journaltitle
     volume = values_one.group(2)
     author_field_index = [journalinfo.index(x)
-                          for x in journalinfo if 'Author(s): ' in x or 'Review by: ' in x][0]
+                          for x in journalinfo if 'Author(s): ' in x or
+                          'Review by: ' in x][0]
     if 'Review: ' in journalinfo[0]:
         title = journalinfo[author_field_index-2].strip(r' \$').lstrip('Review: ')
     else:
@@ -579,12 +589,17 @@ if 'Glossa' in subject:
                          titledata)
         volume = data.group(1)
         number = "1"
-        eid = data.group(2)
+        eid = data.group(3)
         page_start = data.group(4)
         page_end = data.group(5)
         doi = get_doi_from_text(titledata.split('DOI: '))
         author = docinfo[get_index('@', docinfo)-3]
-        authors = author.split(' & ')
+        if "&" in author:
+            authors = author.split(' & ')
+        elif "and" in author:
+            authors = author.split(' and ')
+        else:
+            authors = author
 
 if 'TO CITE THIS ARTICLE' in subject:
     journaltitle = "Glossa: a journal of general linguistics"
@@ -796,14 +811,15 @@ if 'Lingua' in subject:
     #                   r'(\d{1,3}) \((\d{4})\) (\d{1,4})–(\d{1,4})',
     #                   journalinfo[0])
     values = re.search(r'Lingua(|,) ' +
-                       r'(\d{1,3}) \((\d{4})\) (\d{1,4})(-|–)(\d{1,4})',
+                       r'(\d{1,3}) \((\d{4})\) (\d{1,6})(-|–|)(\d{1,4}|)',
                        subject)
     volume = values.group(2)
     number = ""
     year = values.group(3)
     page_start = values.group(4)
     page_end = values.group(6)
-    doi = re.search('(10.+?)( |$|,)', subject).group(0)
+    lingua = extract_text(filename, maxpages=1).split('\n')
+    doi = get_doi_from_text(lingua)
     eid = ""
     title = doc.info[0]['Title'].decode('UTF-8')
     # author = re.sub('(\*)|(\d)', '', journalinfo[6])
@@ -818,17 +834,27 @@ if 'Linguistic Inquiry' in subject:
     # Get the item which includes "Linguistic Inquiry"
     info = li_text[[li_text.index(x)
                     for x in li_text if 'Linguistic Inquiry' in x][0]]
-    values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
-    volume = values.group(1)
-    number = values.group(2)
-    year = values.group(3)
     journaltitle = "Linguistic Inquiry"
     shortjournaltitle = "LI"
-    # The page numbers are one item further than info
-    pages = li_text[[li_text.index(x)
-                     for x in li_text if 'Linguistic Inquiry' in x][0]+1]
-    page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
-    page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
+    if "Early Access" in info:
+        values = ""
+        pages = li_text[[li_text.index(x)
+                         for x in li_text if '–' in x][0]]
+        page_start = re.search(r'(\d{1,3})–', pages).group(1)
+        page_end = re.search(r'–(\d{1,3})', pages).group(1)
+        year = re.search('(\d{4})', li_text[get_index('Massachusetts', li_text)]).group(0)
+        volume = ""
+        number = ""
+    else:
+        values = re.search(r'.+?(\d{1,2}).+?(\d{1,2}).+?(\d{4})', info)
+        volume = values.group(1)
+        number = values.group(2)
+        year = values.group(3)
+        # The page numbers are one item further than info
+        pages = li_text[[li_text.index(x)
+                         for x in li_text if 'Linguistic Inquiry' in x][0]+1]
+        page_start = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(1)
+        page_end = re.search(r'(\d{1,3})(–|-)(.*)', pages).group(3)
     li_info = tag_empty_items(li_info)
     if 'Remarks' in li_info[0]:
         li_info = li_info[li_info.index('1')+1:]
@@ -837,6 +863,9 @@ if 'Linguistic Inquiry' in subject:
     elif 'R E M A R K S' in li_info[0]:
         title = ' '.join(li_info[li_info.index('2')+1:li_info.index('3')])
         authors = li_info[li_info.index('3')+1:li_info.index('4')]
+    elif 'Early Access' in info:
+        authors = li_info[li_info.index('2')+1:li_info.index('3')]
+        title = ' '.join(li_info[li_info.index('1')+1:li_info.index('2')]).lower().capitalize()
     else:
         authors = li_info[li_info.index('1')+1:li_info.index('2')]
         title = ' '.join(li_info[:li_info.index('1')])
@@ -875,21 +904,22 @@ if re.search(r"Linguistic Typology 2\d{3};", subject):
     author = re.sub(r'\*', '', journalinfo[journalinfo.index('1')+1])
     authors = author.split(' and ')
 
-if 'Theoretical ' not in subject and re.search(r'Linguistics \d{1,4}( |;)', subject):
+if 'Theoretical ' not in subject and re.search(r'Linguistics \d{1,4}( |;|–)', subject):
     journaltitle = "Linguistics"
     shortjournaltitle = "Linguistics"
-    values = re.search(r'Linguistics (\d{1,2}) \((\d{4})\), ' +
-                       r' (\d{1,3})-(\d{1,3})', subject)
+    values = re.search(r'Linguistics (\d{1,2})(–\d|) \((\d{4})\), ' +
+                       r'(\d{1,3})(-|–)(\d{1,3})', subject)
     if values:
         volume = values.group(1)
-        number = ""
-        year = values.group(2)
-        page_start = values.group(3)
-        page_end = values.group(4)
+        number = values.group(2).replace("–", "")
+        year = values.group(3)
+        page_start = values.group(4)
+        page_end = values.group(6)
         doi = get_doi_from_text(journalinfo)
         eid = ""
         tag_empty_items(journalinfo)
         title = re.sub(r'\*', '', ' '.join(journalinfo[:journalinfo.index('1')]))
+        title = re.sub(r'1', '', ' '.join(journalinfo[:journalinfo.index('1')]))
         author = journalinfo[journalinfo.index('1')+1:
                              journalinfo.index('2')][0]
         authors = split_string(author)
@@ -1024,7 +1054,6 @@ if 'PNAS' in subject:
         authors = re.sub(', and', ', ', authors)
         authors = re.sub(r',[a-z],', '', authors)
         authors = re.sub(r',\d', '', authors)
-        print(authors)
         authors = re.sub(r'ˇ(\w)', '\\1̌', authors)
         authors = re.sub(r'´(\w)', '\\1́', authors)
         authors = authors.split(', ')
@@ -1083,6 +1112,7 @@ if "Linguistic Review" in subject:
                            r'(\d{4}); (\d{1,3})\((\d{1})\): ' +
                            r'(\d{1,4})–(\d{1,4})',
                            tlr[0])
+        print(values)
         if values == None:
             data = [item for item in tlr if item.isupper()]
             title = re.sub('\*', '', data[0].lower().capitalize())
@@ -1156,7 +1186,6 @@ if "Theoretical Linguistics" in subject:
         title = ' '.join(journalinfo[:get_index('1', journalinfo)])
         author = ' '.join(journalinfo[get_index('1', journalinfo):
                                       get_index('2', journalinfo)])
-        print(author)
         author = re.sub(r'\*', '', author)
         author = re.sub(r'\d', '', author)
         authors = author.split(' and ')
