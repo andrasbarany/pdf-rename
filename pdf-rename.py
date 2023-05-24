@@ -500,16 +500,16 @@ if 'Frontiers in Psychology' in subject:
     journalinfo = journalinfo[get_index('ORIGINAL RESEARCH', journalinfo):]
     journalinfo = tag_empty_items(journalinfo)
     authors = ' '.join(journalinfo[journalinfo.index('2')+1:
-                                   journalinfo.index('3')])#.split(' and ')
-    authors = re.sub('\*', '', authors)
-    authors = re.sub('\d', '', authors)
+                                   journalinfo.index('3')])  # .split(' and ')
+    authors = re.sub(r'\*', '', authors)
+    authors = re.sub(r'\d', '', authors)
     authors = re.sub(', ', ' and ', authors)
     authors = authors.split(' and ')
     citation = ' '.join(journalinfo[journalinfo.index('Citation:')+1:
                                     get_index("Frontiers in Psychology |",
                                               journalinfo)-1])
-    year = re.search('\((\d{4})\)', citation).group(1)
-    volume = re.search('(\d{1,3}):', citation).group(1)
+    year = re.search(r'\((\d{4})\)', citation).group(1)
+    volume = re.search(r'(\d{1,3}):', citation).group(1)
     eid = re.search(r'\.(\d+?)$', doi).group(1)
     number = ""
     page_start = "1"
@@ -684,17 +684,19 @@ if "Language Science Press" in subject or "Berlin: Language" in subject:
     chapter.reverse()
     entry = re.sub('- ', '',
                    ' '.join(chapter[chapter.index('2')+1:chapter.index('1')]))
-    values = re.search(r'(.+?)\. (\d{4})\. (.+?)\. (.+?) \(ed.+?, ' +
-                       r'(.+?), (.+?)–(.+?)\.', entry)
+    values = re.search(r'(.+?)\. (\d{4})\. (.+?)\. (.+?) \((ed|Hrsg).+?, ' +
+                       r'(.+?), (\d{1,4})–(\d{1,4})\.', entry)
     try:
         author = values.group(1)
         authors = author.split(', ')
         year = values.group(2)
         title = values.group(3)
-        editors = re.sub(' & ', ', ', values.group(4)).split(', ')
-        booktitle = values.group(5)
-        page_start = values.group(6)
-        page_end = values.group(7)
+        editors = re.sub('In ', '', values.group(4))
+        editors = re.sub(' & ', ', ', editors).split(', ')
+        booktitle = re.sub(r'([a-z][a-z])\. ([A-z][a-z])', r'\1: \2',
+                           values.group(6))
+        page_start = values.group(7)
+        page_end = values.group(8)
     except AttributeError:
         sys.exit("Sorry, I'm having trouble identifying metadata other than " +
                  "“" + publisher + "”" +
@@ -1239,7 +1241,10 @@ title = re.sub(' \x10', '-', title)
 title = re.sub(' \x00', ' ', title)
 title = re.sub('þÿ', '', title)
 subtitle = ''
-booktitle = ''
+try:
+    booktitle
+except NameError:
+    booktitle = ''
 booksubtitle = ''
 if ': ' in title:
     subtitle = title.split(': ')[1].capitalize()
