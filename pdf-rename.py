@@ -4,10 +4,11 @@ import argparse
 import re
 import subprocess
 import sys
+
 from nameparser import HumanName
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument
 from pdfminer.high_level import extract_text
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import PDFObjRef
 
 parser = argparse.ArgumentParser(description='Rename PDFs automatically \
@@ -1206,6 +1207,13 @@ if "Zeitschrift für Sprachwissenschaft" in subject:
         volume, number = values.group(1), ''
         year = values.group(2)
         page_start, page_end = values.group(3), values.group(4)
+#        values = re.search('Zeitschrift für Sprachwissenschaft ' +
+#                           r'(\d{4}); (\d{1,2})\((\d)\): ' +
+#                           r'(\d{1,4})–(\d{1,4})',
+#                           subject)
+#        volume, number = values.group(2), values.group(3)
+#        year = values.group(1)
+#        page_start, page_end = values.group(4), values.group(6)
     else:
         volume, number = values.group(2), values.group(3)
         year = values.group(1)
